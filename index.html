@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Corona Vacc</title>
+		<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+		<style>
+		    body{
+		        margin: 0;
+		        padding: 0;
+		        background: rgb(28, 28, 28);
+		        color: lightgray;
+		        font-family: "Source Code Pro";
+		    }
+		    .main-wrapper{
+		        padding: 0px 30px;
+		        max-width: 1000px;
+		        margin-left: auto;
+		        margin-right: auto;
+		    }
+		    .info-wrapper{
+		        max-width: 700px;
+		        margin-bottom: 90px;
+		    }
+		    a{
+		        color: inherit;
+		    }
+		    h1{
+		        color: white;
+		    }
+		    canvas{
+		        width: 100%;
+		        margin-bottom: 90px;
+		        max-height: 360px;
+		    }
+		</style>
+	</head>
+	<body>
+	    <div class="main-wrapper">
+	        <div class="info-wrapper">
+        		<h1>Covid19 Statistics of Fully Vaccinated People in Switzerland</h1>
+        		<h5>This page shows statistics regarding the cases, hospitalizations and deaths of fully vaccinated people in Switzerland. The data is sourced from <a href="https://opendata.swiss/de/dataset/covid-19-schweiz">opendata.swiss</a>.</h5>
+    		</div>
+    		<h3>Daily cases of fully vaccinated people</h3>
+    		<canvas id="vacc_cases" width="400" height="200"></canvas>
+    		<h3>Daily hospitalizations of fully vaccinated people</h3>
+    		<canvas id="vacc_hosps" width="400" height="200"></canvas>
+    		<h3>Daily deaths of fully vaccinated people</h3>
+    		<canvas id="vacc_deaths" width="400" height="200"></canvas>
+    		
+		</div>
+		
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
+		
+		
+		
+        <script>
+        var vacc_cases_ctx = document.getElementById('vacc_cases').getContext('2d');
+        var vacc_hosps_ctx = document.getElementById('vacc_hosps').getContext('2d');
+        var vacc_deaths_ctx = document.getElementById('vacc_deaths').getContext('2d');
+        
+        const CASE_URL = "https://www.covid19.admin.ch/api/data/20210820-kjxokm63/sources/COVID19Cases_vaccpersons.json";
+        const HOSP_URL = "https://www.covid19.admin.ch/api/data/20210820-kjxokm63/sources/COVID19Hosp_vaccpersons.json"
+        const DEATH_URL = "https://www.covid19.admin.ch/api/data/20210820-kjxokm63/sources/COVID19Death_vaccpersons.json"
+        
+        function groupBy(xs, key) {
+          return xs.reduce(function(rv, x) {
+            (rv[x[key]] = rv[x[key]] || []).push(x);
+            return rv;
+          }, {});
+        };
+        
+        function componentToHex(c) {
+          var hex = c.toString(16);
+          return hex.length == 1 ? "0" + hex : hex;
+        }
+        
+        function rgbToHex(r, g, b) {
+          return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+        }
+        function lerp(start, end, amt){return (1-amt)*start+amt*end}
+        
+        function value2Color(val, max_val, min_c, max_c){
+            let t = val / max_val;
+            let r = Math.floor(lerp(min_c[0], max_c[0], t));
+            let g = Math.floor(lerp(min_c[1], max_c[1], t));
+            let b = Math.floor(lerp(min_c[2], max_c[2], t));
+            return rgbToHex(r, g, b);
+        }
+        
+        function buildChart(ctx, data, label){
+            var case_max = Math.max(...data.map(el => el.entries));
+            var myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(el => el.date),
+                    datasets: [{
+                        label: label,
+                        data: data.map(el => el.entries),
+                        borderWidth: 1,
+                        backgroundColor: data.map(el => value2Color(el.entries, case_max, [30, 255, 30], [255, 30, 30]))
+                    }],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        
+        fetch(CASE_URL)
+            .then(res => res.json())
+            .then(out => {
+              buildChart(vacc_cases_ctx, out, 'cases per day');
+            })
+            .catch(err => {console.log(err)});
+            
+        fetch(HOSP_URL)
+            .then(res => res.json())
+            .then(out => {
+              buildChart(vacc_hosps_ctx, out, 'hospitalizations per day');
+            })
+            .catch(err => {console.log(err)});
+            
+        fetch(DEATH_URL)
+            .then(res => res.json())
+            .then(out => {
+              var case_data = out;
+              buildChart(vacc_deaths_ctx, out, 'deaths per day');
+            })
+            .catch(err => {console.log(err)});
+        </script>
+	</body>
+</html>
