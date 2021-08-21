@@ -1,192 +1,218 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="UTF-8">
-		<title>Corona Vacc</title>
-		<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
-		<style>
-		    body{
-		        margin: 0;
-		        padding: 0;
-		        background: rgb(28, 28, 28);
-		        color: lightgray;
-		        font-family: "Source Code Pro";
-		        position: relative;
-		        /*display: inline-block;*/
-		    }
-		    body:after{
-                content: "";
-                background-image: url("./res/texture.jpg");
-                background-size: 90px;
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                border: 0;
-                z-index: 100;
-                height: 100%;
-                width: 100%;
-                display: block;
-                pointer-events: none;
-                opacity: .06;
-		    }
-		    .main-wrapper{
-		        padding: 0px 30px;
-		        max-width: 900px;
-		        margin-left: auto;
-		        margin-right: auto;
-		    }
-		    .info-wrapper{
-		        max-width: 700px;
-		        margin-bottom: 90px;
-		    }
-		    .totals-wrapper{
-		        display: flex;
-		        justify-content: space-between;
-		        margin-bottom: 90px;
-		    }
-		    .totals-wrapper > div{
-		        text-align: center;
-                width: min-content;
-		    }
-		    .totals-wrapper h2{
-		        margin: 0;
-		    }
-		    .totals-wrapper h3{
-		        margin: 0;
-		    }
-		    .totals-wrapper h5{
-		        font-size: 12px;
-		        color: darkgray;
-		        margin: 6px 0px;
-		    }
-		    a{
-		        color: inherit;
-		    }
-		    h1{
-		        color: white;
-		    }
-		    canvas{
-		        width: 100%;
-		        margin-bottom: 90px;
-		        max-height: 400px;
-		    }
-		</style>
-	</head>
-	<body>
-	    <div class="main-wrapper">
-	        <div class="info-wrapper">
-        		<h1>Covid19 Statistics of Fully Vaccinated People in Switzerland</h1>
-        		<h5>This page shows statistics regarding the cases, hospitalizations, and deaths of fully vaccinated people in Switzerland. The data is sourced from <a href="https://opendata.swiss/de/dataset/covid-19-schweiz">opendata.swiss</a>.</h5>
-        		<h6>DISCLAIMER: No guarantees are given that the data is correctly presented on this page, as this is not an official dashboard. For the official overview, please refer to the <a href="https://www.covid19.admin.ch/de/overview" target="_blank">BAG dashboard</a>.</h6>
-    		</div>
-    		<section class="totals-wrapper">
-    		    <div>
-        		    <h4>Cases</h4>
-        		    <span><h2 id="vacc_cases_sum">0</h2><h5>out of</h5><h2 id="total_cases_sum">0</h2></span>
-    		    </div>
-    		    <div>
-        		    <h4>Hospitalizations</h4>
-        		    <span><h2 id="vacc_hosps_sum">0</h2><h5>out of</h5><h2 id="total_hosps_sum">0</h2></span>
-    		    </div>
-    		    <div>
-        		    <h4>Deaths</h4>
-        		    <span><h2 id="vacc_deaths_sum">0</h2><h5>out of</h5><h2 id="total_deaths_sum">0</h2></span>
-    		    </div>
-    		</section>
-    		<section>
-        		<h3>Daily cases with fully vaccinated people</h3>
-        		<canvas id="vacc_cases" class="loading" width="400" height="160"></canvas>
-    		</section>
-    		<section>
-        		<h3>Daily hospitalizations of fully vaccinated people</h3>
-        		<canvas id="vacc_hosps" width="400" height="160"></canvas>
-    		</section>
-    		<section>
-        		<h3>Daily deaths of fully vaccinated people</h3>
-        		<canvas id="vacc_deaths" width="400" height="160"></canvas>
-    		</section>
 
-    		<section>
-        		<h3>Weekly cases with fully vaccinated people by age groups</h3>
-        		<canvas id="vacc_cases_ag" width="400" height="160"></canvas>
-    		</section>
-    		<section>
-        		<h3>Weekly hospitalizations of fully vaccinated people by age groups</h3>
-        		<canvas id="vacc_hosps_ag" width="400" height="160"></canvas>
-    		</section>
-    		<section>
-        		<h3>Weekly deaths of fully vaccinated people by age groups</h3>
-        		<canvas id="vacc_deaths_ag" width="400" height="160"></canvas>
-    		</section>
-    		
-    		
-		</div>
-		
-		<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
-		
-		
-		
-        <script>
-        const COLORS = ["#1ef21e","#a4ee43","#dbea72","#f7eaa8","#f9f0e1","#e8c5a0","#db9767","#cd653b","#be1f1f"];
-        
+<head>
+    <meta charset="UTF-8">
+    <title>Corona Vacc</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: rgb(28, 28, 28);
+            color: lightgray;
+            font-family: "Source Code Pro";
+            position: relative;
+        }
+
+        body:after {
+            content: "";
+            background-image: url("./res/texture.jpg");
+            background-size: 90px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            border: 0;
+            z-index: 100;
+            height: 100%;
+            width: 100%;
+            display: block;
+            pointer-events: none;
+            opacity: .06;
+        }
+
+        .main-wrapper {
+            padding: 0px 30px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .info-wrapper {
+            max-width: 700px;
+            margin-bottom: 90px;
+        }
+
+        .totals-wrapper {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 90px;
+        }
+
+        .totals-wrapper>div {
+            text-align: center;
+            width: min-content;
+        }
+
+        .totals-wrapper h2 {
+            margin: 0;
+        }
+
+        .totals-wrapper h3 {
+            margin: 0;
+        }
+
+        .totals-wrapper h5 {
+            font-size: 12px;
+            color: darkgray;
+            margin: 6px 0px;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        h1 {
+            color: white;
+        }
+
+        canvas {
+            width: 100%;
+            margin-bottom: 90px;
+            max-height: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-wrapper">
+        <div class="info-wrapper">
+            <h1>Covid19 Statistics of Fully Vaccinated People in Switzerland</h1>
+            <h5>This page shows statistics regarding the cases, hospitalizations, and deaths of fully vaccinated people
+                in Switzerland. The data is sourced from <a
+                    href="https://opendata.swiss/de/dataset/covid-19-schweiz">opendata.swiss</a>.</h5>
+            <h6>DISCLAIMER: No guarantees are given that the data is correctly presented on this page, as this is not an
+                official dashboard. For the official overview, please refer to the <a
+                    href="https://www.covid19.admin.ch/de/overview" target="_blank">BAG dashboard</a>.</h6>
+        </div>
+        <section class="totals-wrapper">
+            <div>
+                <h4>Cases</h4>
+                <span>
+                    <h2 id="vacc_cases_sum">0</h2>
+                    <h5>out of</h5>
+                    <h2 id="total_cases_sum">0</h2>
+                </span>
+            </div>
+            <div>
+                <h4>Hospitalizations</h4>
+                <span>
+                    <h2 id="vacc_hosps_sum">0</h2>
+                    <h5>out of</h5>
+                    <h2 id="total_hosps_sum">0</h2>
+                </span>
+            </div>
+            <div>
+                <h4>Deaths</h4>
+                <span>
+                    <h2 id="vacc_deaths_sum">0</h2>
+                    <h5>out of</h5>
+                    <h2 id="total_deaths_sum">0</h2>
+                </span>
+            </div>
+        </section>
+        <section>
+            <h3>Daily cases with fully vaccinated people</h3>
+            <canvas id="vacc_cases" class="loading" width="400" height="160"></canvas>
+        </section>
+        <section>
+            <h3>Daily hospitalizations of fully vaccinated people</h3>
+            <canvas id="vacc_hosps" width="400" height="160"></canvas>
+        </section>
+        <section>
+            <h3>Daily deaths of fully vaccinated people</h3>
+            <canvas id="vacc_deaths" width="400" height="160"></canvas>
+        </section>
+
+        <section>
+            <h3>Weekly cases with fully vaccinated people by age groups</h3>
+            <canvas id="vacc_cases_ag" width="400" height="160"></canvas>
+        </section>
+        <section>
+            <h3>Weekly hospitalizations of fully vaccinated people by age groups</h3>
+            <canvas id="vacc_hosps_ag" width="400" height="160"></canvas>
+        </section>
+        <section>
+            <h3>Weekly deaths of fully vaccinated people by age groups</h3>
+            <canvas id="vacc_deaths_ag" width="400" height="160"></canvas>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
+
+
+
+    <script>
+        const COLORS = ["#1ef21e", "#a4ee43", "#dbea72", "#f7eaa8", "#f9f0e1", "#e8c5a0", "#db9767", "#cd653b", "#be1f1f"];
+
         var vacc_cases_ctx = document.getElementById('vacc_cases').getContext('2d');
         var vacc_hosps_ctx = document.getElementById('vacc_hosps').getContext('2d');
         var vacc_deaths_ctx = document.getElementById('vacc_deaths').getContext('2d');
         var vacc_cases_ag_ctx = document.getElementById('vacc_cases_ag').getContext('2d');
         var vacc_hosps_ag_ctx = document.getElementById('vacc_hosps_ag').getContext('2d');
         var vacc_deaths_ag_ctx = document.getElementById('vacc_deaths_ag').getContext('2d');
-        
-        
+
+
         var cases_chart;
         var hosps_chart;
         var deaths_chart;
         var cases_ag_chart;
         var hosps_ag_chart;
         var deaths_ag_chart;
-        
+
         const CASE_AG_URL = "https://www.covid19.admin.ch/api/data/20210820-cd5ucvap/sources/COVID19Cases_vaccpersons_AKL10_w.json";
         const CASE_VACC_URL = "https://www.covid19.admin.ch/api/data/20210820-kjxokm63/sources/COVID19Cases_vaccpersons.json";
         const CASE_URL = "https://www.covid19.admin.ch/api/data/20210820-cd5ucvap/sources/COVID19Cases_geoRegion.json";
-        
+
         const HOSP_AG_URL = "https://www.covid19.admin.ch/api/data/20210820-cd5ucvap/sources/COVID19Hosp_vaccpersons_AKL10_w.json";
         const HOSP_VACC_URL = "https://www.covid19.admin.ch/api/data/20210820-kjxokm63/sources/COVID19Hosp_vaccpersons.json";
         const HOSP_URL = "https://www.covid19.admin.ch/api/data/20210820-kjxokm63/sources/COVID19Hosp_geoRegion.json";
-        
+
         const DEATH_AG_URL = "https://www.covid19.admin.ch/api/data/20210820-cd5ucvap/sources/COVID19Death_vaccpersons_AKL10_w.json";
         const DEATH_VACC_URL = "https://www.covid19.admin.ch/api/data/20210820-kjxokm63/sources/COVID19Death_vaccpersons.json";
         const DEATH_URL = "https://www.covid19.admin.ch/api/data/20210820-kjxokm63/sources/COVID19Death_geoRegion.json";
-        
+
         function numberWithCommas(x) {
             return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
         }
-        
+
         function groupBy(xs, key) {
-          return xs.reduce(function(rv, x) {
-            (rv[x[key]] = rv[x[key]] || []).push(x);
-            return rv;
-          }, {});
+            return xs.reduce(function (rv, x) {
+                (rv[x[key]] = rv[x[key]] || []).push(x);
+                return rv;
+            }, {});
         };
-        
+
         function componentToHex(c) {
-          var hex = c.toString(16);
-          return hex.length == 1 ? "0" + hex : hex;
+            var hex = c.toString(16);
+            return hex.length == 1 ? "0" + hex : hex;
         }
-        
+
         function rgbToHex(r, g, b) {
-          return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+            return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
         }
-        function lerp(start, end, amt){return (1-amt)*start+amt*end}
-        
-        function value2Color(val, max_val, min_c, max_c){
+        function lerp(start, end, amt) { return (1 - amt) * start + amt * end }
+
+        function value2Color(val, max_val, min_c, max_c) {
             let t = val / max_val;
             let r = Math.floor(lerp(min_c[0], max_c[0], t));
             let g = Math.floor(lerp(min_c[1], max_c[1], t));
             let b = Math.floor(lerp(min_c[2], max_c[2], t));
             return rgbToHex(r, g, b);
         }
-        
-        function buildChart(ctx, data, label){
+
+        function buildChart(ctx, data, label) {
             var case_max = Math.max(...data.map(el => el.entries));
             var myChart = new Chart(ctx, {
                 type: 'bar',
@@ -211,20 +237,20 @@
             });
             return myChart;
         }
-        function buildChartAg(ctx, data, label){
+        function buildChartAg(ctx, data, label) {
             let grouped_data = groupBy(data, "altersklasse_covid19");
             var key_count = Object.keys(grouped_data).length;
             let dataset = [];
-            
+
             Object.entries(grouped_data).forEach(([key, value], index) => {
-                        if(key == 'Unbekannt') return;
-                        dataset.push({
-                            label: value[0].altersklasse_covid19,
-                            data: value.map(el => el.entries),
-                            backgroundColor: COLORS[index]
-                        });
+                if (key == 'Unbekannt') return;
+                dataset.push({
+                    label: value[0].altersklasse_covid19,
+                    data: value.map(el => el.entries),
+                    backgroundColor: COLORS[index]
+                });
             });
-            
+
             var myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -243,23 +269,23 @@
                     }
                 }
             });
-            
+
             return myChart;
         }
-        
-        
+
+
         fetch(CASE_VACC_URL)
             .then(res => res.json())
             .then(out => {
-              cases_chart = buildChart(vacc_cases_ctx, out, 'Vully Vaccinated');
-              let el = document.getElementById('vacc_cases_sum');
-              el.innerText = numberWithCommas(out.pop().sumTotal);
+                cases_chart = buildChart(vacc_cases_ctx, out, 'Vully Vaccinated');
+                let el = document.getElementById('vacc_cases_sum');
+                el.innerText = numberWithCommas(out.pop().sumTotal);
             })
-            .catch(err => {console.log(err)});
+            .catch(err => { console.log(err) });
         fetch(CASE_URL)
             .then(res => res.json())
             .then(out => {
-                
+
                 let min_date = Date.parse('2021-01-27');
                 let data = out.filter(el => min_date <= Date.parse(el.datum));
                 data = {
@@ -268,28 +294,28 @@
                     backgroundColor: '#71717161',
                     hidden: true
                 }
-                
+
                 cases_chart.data.datasets.push(data);
                 cases_chart.update();
-                
+
                 let el = document.getElementById('total_cases_sum');
                 el.innerText = numberWithCommas(out.pop().sumTotal);
             })
-            .catch(err => {console.log(err)});
-        
-        
+            .catch(err => { console.log(err) });
+
+
         fetch(HOSP_VACC_URL)
             .then(res => res.json())
             .then(out => {
-              hosps_chart = buildChart(vacc_hosps_ctx, out, 'Vully Vaccinated');
-              let el = document.getElementById('vacc_hosps_sum');
-              el.innerText = numberWithCommas(out.pop().sumTotal);
+                hosps_chart = buildChart(vacc_hosps_ctx, out, 'Vully Vaccinated');
+                let el = document.getElementById('vacc_hosps_sum');
+                el.innerText = numberWithCommas(out.pop().sumTotal);
             })
-            .catch(err => {console.log(err)});
+            .catch(err => { console.log(err) });
         fetch(HOSP_URL)
             .then(res => res.json())
             .then(out => {
-                
+
                 let min_date = Date.parse('2021-01-27');
                 let data = out.filter(el => min_date <= Date.parse(el.datum));
                 data = {
@@ -298,29 +324,29 @@
                     backgroundColor: '#71717161',
                     hidden: true
                 }
-                
+
                 hosps_chart.data.datasets.push(data);
                 hosps_chart.update();
-                
+
                 let el = document.getElementById('total_hosps_sum');
                 el.innerText = numberWithCommas(out.pop().sumTotal);
             })
-            .catch(err => {console.log(err)});
-            
-        
-        
+            .catch(err => { console.log(err) });
+
+
+
         fetch(DEATH_VACC_URL)
             .then(res => res.json())
             .then(out => {
-              deaths_chart = buildChart(vacc_deaths_ctx, out, 'Vully Vaccinated');
-              let el = document.getElementById('vacc_deaths_sum');
-              el.innerText = numberWithCommas(out.pop().sumTotal);
+                deaths_chart = buildChart(vacc_deaths_ctx, out, 'Vully Vaccinated');
+                let el = document.getElementById('vacc_deaths_sum');
+                el.innerText = numberWithCommas(out.pop().sumTotal);
             })
-            .catch(err => {console.log(err)});
+            .catch(err => { console.log(err) });
         fetch(DEATH_URL)
             .then(res => res.json())
             .then(out => {
-                
+
                 let min_date = Date.parse('2021-01-27');
                 let data = out.filter(el => min_date <= Date.parse(el.datum));
                 data = {
@@ -329,37 +355,35 @@
                     backgroundColor: '#71717161',
                     hidden: true
                 }
-                
+
                 deaths_chart.data.datasets.push(data);
                 deaths_chart.update();
-                
+
                 let el = document.getElementById('total_deaths_sum');
                 el.innerText = numberWithCommas(out.pop().sumTotal);
             })
-            .catch(err => {console.log(err)});
-            
-            
+            .catch(err => { console.log(err) });
+
+
         fetch(CASE_AG_URL)
             .then(res => res.json())
             .then(out => {
-              cases_ag_chart = buildChartAg(vacc_cases_ag_ctx, out, 'cases per week in age groups');
+                cases_ag_chart = buildChartAg(vacc_cases_ag_ctx, out, 'cases per week in age groups');
             })
-            .catch(err => {console.log(err)});
+            .catch(err => { console.log(err) });
         fetch(HOSP_AG_URL)
             .then(res => res.json())
             .then(out => {
-              hosps_ag_chart = buildChartAg(vacc_hosps_ag_ctx, out, 'hospitalizations per week in age groups');
+                hosps_ag_chart = buildChartAg(vacc_hosps_ag_ctx, out, 'hospitalizations per week in age groups');
             })
-            .catch(err => {console.log(err)});
+            .catch(err => { console.log(err) });
         fetch(DEATH_AG_URL)
             .then(res => res.json())
             .then(out => {
-              deaths_ag_chart = buildChartAg(vacc_deaths_ag_ctx, out, 'deaths per week in age groups');
+                deaths_ag_chart = buildChartAg(vacc_deaths_ag_ctx, out, 'deaths per week in age groups');
             })
-            .catch(err => {console.log(err)});
-            
-            
-        
-        </script>
-	</body>
+            .catch(err => { console.log(err) });
+    </script>
+</body>
+
 </html>
