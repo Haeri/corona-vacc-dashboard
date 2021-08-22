@@ -67,6 +67,19 @@
             width: min-content;
         }
 
+        .pie-wrapper {
+            position: relative;
+            display: block;
+        }
+
+        .pie-label-wrapper {
+            aspect-ratio: 1.04;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
         .totals-wrapper h2,
         .totals-wrapper h3,
         .totals-wrapper h4 {
@@ -80,7 +93,7 @@
         .totals-wrapper h5 {
             font-size: 12px;
             color: darkgray;
-            margin: 6px 0px;
+            margin: 0px;
         }
 
         a {
@@ -99,6 +112,13 @@
         canvas {
             width: 100%;
             max-height: 400px;
+        }
+
+        .pie_stats {
+            position: absolute;
+            top: 0;
+            margin: 0;
+            z-index: -1;
         }
 
         .info-wrapper,
@@ -185,39 +205,48 @@
         <section class="totals-wrapper">
             <div>
                 <h4>Cases</h4>
-                <span>
-                    <h2 id="vacc_cases_sum">
-                        <div class="lds-ripple"></div>
-                    </h2>
-                    <h5>out of</h5>
-                    <h2 id="total_cases_sum">
-                        <div class="lds-ripple"></div>
-                    </h2>
-                </span>
+                <div class="pie-wrapper">
+                    <canvas class="pie_stats" id="case_pie" width="100" height="100"></canvas>
+                    <div class="pie-label-wrapper">
+                        <h2 id="vacc_cases_sum">
+                            <div class="lds-ripple"></div>
+                        </h2>
+                        <h5>out of</h5>
+                        <h2 id="total_cases_sum">
+                            <div class="lds-ripple"></div>
+                        </h2>
+                    </div>
+                </div>
             </div>
             <div>
                 <h4>Hospitalizations</h4>
-                <span>
-                    <h2 id="vacc_hosps_sum">
-                        <div class="lds-ripple"></div>
-                    </h2>
-                    <h5>out of</h5>
-                    <h2 id="total_hosps_sum">
-                        <div class="lds-ripple"></div>
-                    </h2>
-                </span>
+                <div class="pie-wrapper">
+                    <canvas class="pie_stats" id="hosp_pie" width="100" height="100"></canvas>
+                    <div class="pie-label-wrapper">
+                        <h2 id="vacc_hosps_sum">
+                            <div class="lds-ripple"></div>
+                        </h2>
+                        <h5>out of</h5>
+                        <h2 id="total_hosps_sum">
+                            <div class="lds-ripple"></div>
+                        </h2>
+                    </div>
+                </div>
             </div>
             <div>
                 <h4>Deaths</h4>
-                <span>
-                    <h2 id="vacc_deaths_sum">
-                        <div class="lds-ripple"></div>
-                    </h2>
-                    <h5>out of</h5>
-                    <h2 id="total_deaths_sum">
-                        <div class="lds-ripple"></div>
-                    </h2>
-                </span>
+                <div class="pie-wrapper">
+                    <canvas class="pie_stats" id="death_pie" width="100" height="100"></canvas>
+                    <div class="pie-label-wrapper">
+                        <h2 id="vacc_deaths_sum">
+                            <div class="lds-ripple"></div>
+                        </h2>
+                        <h5>out of</h5>
+                        <h2 id="total_deaths_sum">
+                            <div class="lds-ripple"></div>
+                        </h2>
+                    </div>
+                </div>
             </div>
         </section>
         <section>
@@ -279,12 +308,31 @@
         var vacc_hosps_ag_ctx = document.getElementById('vacc_hosps_ag').getContext('2d');
         var vacc_deaths_ag_ctx = document.getElementById('vacc_deaths_ag').getContext('2d');
 
+        var case_pie_ctx = document.getElementById('case_pie').getContext('2d');
+        var hosp_pie_ctx = document.getElementById('hosp_pie').getContext('2d');
+        var death_pie_ctx = document.getElementById('death_pie').getContext('2d');
+
         var cases_chart;
         var hosps_chart;
         var deaths_chart;
         var cases_ag_chart;
         var hosps_ag_chart;
         var deaths_ag_chart;
+
+        var completion = {
+            case: {
+                vacc: false,
+                total: false
+            },
+            hosp: {
+                vacc: false,
+                total: false
+            },
+            death: {
+                vacc: false,
+                total: false
+            }
+        }
 
         function recLookup(obj, path) {
             parts = path.split(".");
@@ -384,6 +432,31 @@
             return myChart;
         }
 
+        function buildPie(ctx, data) {
+            var myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ["Fully Vacc", "Non Vacc"],
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#1eff1e', '#71717161'],
+                        borderWidth: 0,
+                        cutout: "95%"
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                    }
+                }
+            });
+
+            return myChart;
+        }
+
+
 
         fetch(API_URL)
             .then(res => res.json())
@@ -394,7 +467,13 @@
                     .then(out => {
                         cases_chart = buildChart(vacc_cases_ctx, out, 'Vully Vaccinated');
                         let el = document.getElementById('vacc_cases_sum');
-                        el.innerText = numberWithCommas(out.pop().sumTotal);
+                        completion.case.vacc = out.pop().sumTotal
+                        el.innerText = numberWithCommas(completion.case.vacc);
+
+                        if (completion.case.total) {
+                            let data = [completion.case.vacc, completion.case.total - completion.case.vacc];
+                            buildPie(case_pie_ctx, data);
+                        }
                     })
                     .catch(err => { console.log(err) });
                 fetch(recLookup(out, CASE_PATH))
@@ -414,7 +493,15 @@
                         cases_chart.update();
 
                         let el = document.getElementById('total_cases_sum');
-                        el.innerText = numberWithCommas(out.pop().sumTotal);
+                        completion.case.total = out.pop().sumTotal
+                        el.innerText = numberWithCommas(completion.case.total);
+
+                        if (completion.case.vacc) {
+                            let data = [completion.case.vacc, completion.case.total - completion.case.vacc];
+
+                            console.log(completion.case.vacc, completion.case.total, data);
+                            buildPie(case_pie_ctx, data);
+                        }
                     })
                     .catch(err => { console.log(err) });
 
@@ -423,8 +510,14 @@
                     .then(res => res.json())
                     .then(out => {
                         hosps_chart = buildChart(vacc_hosps_ctx, out, 'Vully Vaccinated');
-                        let el = document.getElementById('vacc_hosps_sum');
-                        el.innerText = numberWithCommas(out.pop().sumTotal);
+                        let el = document.getElementById('vacc_hosps_sum');                        
+                        completion.hosp.vacc = out.pop().sumTotal
+                        el.innerText = numberWithCommas(completion.hosp.vacc);
+
+                        if (completion.hosp.total) {
+                            let data = [completion.hosp.vacc, completion.hosp.total - completion.hosp.vacc];
+                            buildPie(hosp_pie_ctx, data);
+                        }
                     })
                     .catch(err => { console.log(err) });
                 fetch(recLookup(out, HOSP_PATH))
@@ -444,7 +537,15 @@
                         hosps_chart.update();
 
                         let el = document.getElementById('total_hosps_sum');
-                        el.innerText = numberWithCommas(out.pop().sumTotal);
+                        completion.hosp.total = out.pop().sumTotal
+                        el.innerText = numberWithCommas(completion.hosp.total);
+
+                        if (completion.hosp.vacc) {
+                            let data = [completion.hosp.vacc, completion.hosp.total - completion.hosp.vacc];
+
+                            console.log(completion.hosp.vacc, completion.hosp.total, data);
+                            buildPie(hosp_pie_ctx, data);
+                        }
                     })
                     .catch(err => { console.log(err) });
 
@@ -455,7 +556,13 @@
                     .then(out => {
                         deaths_chart = buildChart(vacc_deaths_ctx, out, 'Vully Vaccinated');
                         let el = document.getElementById('vacc_deaths_sum');
-                        el.innerText = numberWithCommas(out.pop().sumTotal);
+                        completion.death.vacc = out.pop().sumTotal
+                        el.innerText = numberWithCommas(completion.death.vacc);
+
+                        if (completion.death.total) {
+                            let data = [completion.death.vacc, completion.death.total - completion.death.vacc];
+                            buildPie(death_pie_ctx, data);
+                        }
                     })
                     .catch(err => { console.log(err) });
                 fetch(recLookup(out, DEATH_PATH))
@@ -475,7 +582,15 @@
                         deaths_chart.update();
 
                         let el = document.getElementById('total_deaths_sum');
-                        el.innerText = numberWithCommas(out.pop().sumTotal);
+                        completion.death.total = out.pop().sumTotal
+                        el.innerText = numberWithCommas(completion.death.total);
+
+                        if (completion.death.vacc) {
+                            let data = [completion.death.vacc, completion.death.total - completion.death.vacc];
+
+                            console.log(completion.death.vacc, completion.death.total, data);
+                            buildPie(death_pie_ctx, data);
+                        }
                     })
                     .catch(err => { console.log(err) });
 
