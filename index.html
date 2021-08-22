@@ -4,6 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Vacc Stats</title>
+    <meta name="description"
+        content="This page shows statistics regarding the cases, hospitalizations, and deaths of fully vaccinated people in Switzerland.">
+    <meta name="author" content="Haeri">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
     <style>
         body {
@@ -41,7 +46,6 @@
 
         .info-wrapper {
             max-width: 700px;
-            margin-bottom: 90px;
         }
 
         small {
@@ -56,7 +60,6 @@
         .totals-wrapper {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 90px;
         }
 
         .totals-wrapper>div {
@@ -64,12 +67,14 @@
             width: min-content;
         }
 
-        .totals-wrapper h2 {
+        .totals-wrapper h2,
+        .totals-wrapper h3,
+        .totals-wrapper h4 {
             margin: 0;
         }
 
-        .totals-wrapper h3 {
-            margin: 0;
+        .totals-wrapper h4 {
+            margin-bottom: 1rem;
         }
 
         .totals-wrapper h5 {
@@ -93,8 +98,13 @@
 
         canvas {
             width: 100%;
-            margin-bottom: 90px;
             max-height: 400px;
+        }
+
+        .info-wrapper,
+        .totals-wrapper,
+        canvas {
+            margin-bottom: 90px;
         }
 
 
@@ -139,6 +149,20 @@
         }
 
         @media only screen and (max-width: 800px) {
+            .main-wrapper {
+                padding: 0px 20px;
+            }
+
+            .info-wrapper,
+            .totals-wrapper,
+            canvas {
+                margin-bottom: 60px;
+            }
+
+            hr {
+                margin: 60px 0px;
+            }
+
             .info-wrapper {
                 max-width: none;
             }
@@ -198,28 +222,28 @@
         </section>
         <section>
             <h3>Daily cases with fully vaccinated people</h3>
-            <canvas id="vacc_cases" class="loading" width="400" height="160"></canvas>
+            <canvas id="vacc_cases" class="loading" width="400" height="300"></canvas>
         </section>
         <section>
             <h3>Daily hospitalizations of fully vaccinated people</h3>
-            <canvas id="vacc_hosps" width="400" height="160"></canvas>
+            <canvas id="vacc_hosps" width="400" height="300"></canvas>
         </section>
         <section>
             <h3>Daily deaths of fully vaccinated people</h3>
-            <canvas id="vacc_deaths" width="400" height="160"></canvas>
+            <canvas id="vacc_deaths" width="400" height="300"></canvas>
         </section>
         <hr>
         <section>
             <h3>Weekly cases with fully vaccinated people by age groups</h3>
-            <canvas id="vacc_cases_ag" width="400" height="160"></canvas>
+            <canvas id="vacc_cases_ag" width="400" height="300"></canvas>
         </section>
         <section>
             <h3>Weekly hospitalizations of fully vaccinated people by age groups</h3>
-            <canvas id="vacc_hosps_ag" width="400" height="160"></canvas>
+            <canvas id="vacc_hosps_ag" width="400" height="300"></canvas>
         </section>
         <section>
             <h3>Weekly deaths of fully vaccinated people by age groups</h3>
-            <canvas id="vacc_deaths_ag" width="400" height="160"></canvas>
+            <canvas id="vacc_deaths_ag" width="400" height="300"></canvas>
         </section>
     </div>
 
