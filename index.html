@@ -51,13 +51,13 @@
         small {
             line-height: 16px;
             font-size: 11px;
-            color: rgb(28, 28, 28);
-            background: #989898;
-            padding: 2px 6px;
+            color: #777777;
+            padding: 5px 10px;
             display: block;
+            border: 1px dashed #545454;
         }
 
-        #date-source{
+        .v-centered {
             vertical-align: middle;
         }
 
@@ -204,9 +204,13 @@
             <small>DISCLAIMER: This is not an official communication channel. No guarantees are given about the
                 correctness of the presented data. For the official communication, please refer to the <a
                     href="https://www.covid19.admin.ch/de/overview" target="_blank">BAG Dashboard</a>.</small>
-            <h5>Dataset updated on: <span id="date-source">
+            <h5>Dataset updated on: <span class="v-centered" id="date-source">
                     <div class="lds-ripple"></div>
                 </span></h5>
+            <h5>Calculations based on the time period<br>from 27.01.2021 to <span class="v-centered" id="range-max-date">
+                    <div class="lds-ripple"></div>
+                </span></h5>
+            </h5>
         </div>
         <section class="totals-wrapper" id="summary">
             <div>
@@ -271,15 +275,15 @@
             </div>
         </section>
         <section id="cases">
-            <h3>Daily cases with fully vaccinated people</h3>
+            <h3>Daily cases with fully vaccinated people vs total</h3>
             <canvas id="vacc_cases" class="loading" width="400" height="300"></canvas>
         </section>
         <section id="hospitalizations">
-            <h3>Daily hospitalizations of fully vaccinated people</h3>
+            <h3>Daily hospitalizations of fully vaccinated people vs total</h3>
             <canvas id="vacc_hosps" width="400" height="300"></canvas>
         </section>
         <section id="deaths">
-            <h3>Daily deaths of fully vaccinated people</h3>
+            <h3>Daily deaths of fully vaccinated people vs total</h3>
             <canvas id="vacc_deaths" width="400" height="300"></canvas>
         </section>
         <hr>
@@ -382,7 +386,10 @@
         function rgbToHex(r, g, b) {
             return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
         }
-        function lerp(start, end, amt) { return (1 - amt) * start + amt * end }
+
+        function lerp(start, end, amt) {
+            return (1 - amt) * start + amt * end;
+        }
 
         function value2Color(val, max_val, min_c, max_c) {
             let t = val / max_val;
@@ -501,12 +508,14 @@
                     .then(out => {
                         cases_chart = buildChart(vacc_cases_ctx, out, 'Vully Vaccinated');
                         let el = document.getElementById('vacc_cases_sum');
-                        completion.case.vacc = out.pop().sumTotal
+                        completion.case.vacc = out[out.length - 1].sumTotal
                         el.innerText = numberWithCommas(completion.case.vacc);
 
 
                         fill_summary_widget(completion.case.vacc, completion.case.total, "case_percent", case_pie_ctx);
 
+                        let range_max_date_ui = document.getElementById('range-max-date');
+                        range_max_date_ui.innerText = new Date(out[out.length - 1].date).toLocaleDateString().replaceAll("/", ".");
                     })
                     .catch(err => { console.log(err) });
                 fetch(recLookup(out, CASE_PATH))
@@ -526,7 +535,7 @@
                         cases_chart.update();
 
                         let el = document.getElementById('total_cases_sum');
-                        completion.case.total = out.pop().sumTotal
+                        completion.case.total = out[out.length - 1].sumTotal
                         el.innerText = numberWithCommas(completion.case.total);
 
 
@@ -541,7 +550,7 @@
                     .then(out => {
                         hosps_chart = buildChart(vacc_hosps_ctx, out, 'Vully Vaccinated');
                         let el = document.getElementById('vacc_hosps_sum');
-                        completion.hosp.vacc = out.pop().sumTotal
+                        completion.hosp.vacc = out[out.length - 1].sumTotal
                         el.innerText = numberWithCommas(completion.hosp.vacc);
 
                         fill_summary_widget(completion.hosp.vacc, completion.hosp.total, "hosp_percent", hosp_pie_ctx);
@@ -564,7 +573,7 @@
                         hosps_chart.update();
 
                         let el = document.getElementById('total_hosps_sum');
-                        completion.hosp.total = out.pop().sumTotal
+                        completion.hosp.total = out[out.length - 1].sumTotal
                         el.innerText = numberWithCommas(completion.hosp.total);
 
                         fill_summary_widget(completion.hosp.vacc, completion.hosp.total, "hosp_percent", hosp_pie_ctx);
@@ -578,7 +587,7 @@
                     .then(out => {
                         deaths_chart = buildChart(vacc_deaths_ctx, out, 'Vully Vaccinated');
                         let el = document.getElementById('vacc_deaths_sum');
-                        completion.death.vacc = out.pop().sumTotal
+                        completion.death.vacc = out[out.length - 1].sumTotal
                         el.innerText = numberWithCommas(completion.death.vacc);
 
                         fill_summary_widget(completion.death.vacc, completion.death.total, "death_percent", death_pie_ctx);
@@ -601,7 +610,7 @@
                         deaths_chart.update();
 
                         let el = document.getElementById('total_deaths_sum');
-                        completion.death.total = out.pop().sumTotal
+                        completion.death.total = out[out.length - 1].sumTotal
                         el.innerText = numberWithCommas(completion.death.total);
 
                         fill_summary_widget(completion.death.vacc, completion.death.total, "death_percent", death_pie_ctx);
