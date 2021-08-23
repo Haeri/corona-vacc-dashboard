@@ -58,7 +58,7 @@
         }
 
         .v-centered {
-            vertical-align: middle;
+            /*vertical-align: middle;*/
         }
 
         .totals-wrapper {
@@ -126,9 +126,136 @@
 
         .info-wrapper,
         .totals-wrapper,
+        #date-range,
         canvas {
             margin-bottom: 90px;
         }
+
+
+
+        .range-input-slider {
+            width: 100%;
+            position: relative;
+            height: 5px;
+            margin: 45px 0 0px 0;
+        }
+
+        .range-input-slider>div {
+            /*position: absolute;*/
+            /*left: 13px;
+            right: 15px;
+            height: 5px;*/
+        }
+
+        .range-input-slider>div>.range-input-track {
+            border-bottom: 1px dashed gray;
+        }
+
+
+        .range-input-slider>div>.range-input-range {
+            position: absolute;
+            top: -1px;
+            height: 3px;
+            background-color: #1df11d;
+        }
+
+        .range-input-slider>div>.range-input-thumb {
+            position: absolute;
+            top: -8px;
+            z-index: 2;
+            height: 17px;
+            width: 17px;
+            margin-left: -8px;
+            margin-right: -8px;
+            cursor: pointer;
+            display: block;
+        }
+
+        .range-input-slider>input[type=range] {
+            position: absolute;
+            pointer-events: none;
+            -webkit-appearance: none;
+            z-index: 3;
+            height: 14px;
+            top: -2px;
+            width: 100%;
+            opacity: 0;
+        }
+
+        div.range-input-slider>input[type=range]:focus::-webkit-slider-runnable-track {
+            background: transparent;
+            border: transparent;
+        }
+
+        div.range-input-slider>input[type=range]:focus {
+            outline: none;
+        }
+
+        div.range-input-slider>input[type=range]::-webkit-slider-thumb {
+            pointer-events: all;
+            width: 28px;
+            height: 28px;
+            border-radius: 0px;
+            border: 0 none;
+            background: red;
+            -webkit-appearance: none;
+        }
+
+        div.range-input-slider>input[type=range]::-ms-fill-lower {
+            background: transparent;
+            border: 0 none;
+        }
+
+        div.range-input-slider>input[type=range]::-ms-fill-upper {
+            background: transparent;
+            border: 0 none;
+        }
+
+        div.range-input-slider>input[type=range]::-ms-tooltip {
+            display: none;
+        }
+
+        .range-input-thumb-left,
+        .range-input-thumb-right {
+            display: inline-block;
+            position: absolute;
+            width: 1px;
+            height: 6px;
+            background: white;
+            top: -1px;
+            /*transition: 0.3s;*/
+        }
+
+        .range-input-thumb-left {
+            bottom: 3px;
+            top: auto;
+        }
+
+        .range-input-thumb-left:hover {
+            /*width: 6px;*/
+        }
+
+        .range-input-sign {
+            font-size: 12px;
+        }
+
+        .range-input-thumb-left .range-input-sign {
+            position: absolute;
+            bottom: 6px;
+            /*transform: translateX(-50%);*/
+            left: 0;
+        }
+
+        .range-input-thumb-right .range-input-sign {
+            position: absolute;
+            top: 6px;
+            /*transform: translateX(-50%);*/
+            right: 0;
+        }
+
+        .range-input-sign>span {}
+
+        .range-input-sign {}
 
 
 
@@ -137,6 +264,7 @@
             position: relative;
             width: 40px;
             height: 40px;
+            vertical-align: middle;
         }
 
         .lds-ripple:before,
@@ -207,11 +335,14 @@
             <h5>Dataset updated on: <span class="v-centered" id="date-source">
                     <div class="lds-ripple"></div>
                 </span></h5>
-            <h5>Calculations based on the time period<br>from 27.01.2021 to <span class="v-centered" id="range-max-date">
+            <h5>Calculations based on the time period<br>from 27.01.2021 to <span class="v-centered"
+                    id="range-max-date">
                     <div class="lds-ripple"></div>
                 </span></h5>
             </h5>
         </div>
+
+
         <section class="totals-wrapper" id="summary">
             <div>
                 <h4>Cases</h4>
@@ -274,6 +405,29 @@
                 </div>
             </div>
         </section>
+
+        <section id="date-range" style="display: none">
+            <div class="range-input-slider" id="slider-distance">
+                <div>
+                    <div class="range-input-track"></div>
+                    <div class="range-input-range" style="left:0%;right:0%;"></div>
+
+                    <span class="range-input-thumb-left" style="left:0%;">
+                        <div class="range-input-sign">
+                            <span id="value-min"></span>
+                        </div>
+                    </span>
+                    <span class="range-input-thumb-right" style="left:100%;">
+                        <div class="range-input-sign">
+                            <span id="value-max"></span>
+                        </div>
+                    </span>
+                </div>
+                <input id="min-input" type="range" value="0" max="100" min="0" step="1" />
+                <input id="max-input" type="range" value="100" max="100" min="0" step="1" />
+            </div>
+        </section>
+
         <section id="cases">
             <h3>Daily cases with fully vaccinated people vs total</h3>
             <canvas id="vacc_cases" class="loading" width="400" height="300"></canvas>
@@ -326,16 +480,26 @@
         const HOSP_PATH = DAILY_PATH + "hosp";
         const DEATH_PATH = DAILY_PATH + "death";
 
-        var vacc_cases_ctx = document.getElementById('vacc_cases').getContext('2d');
-        var vacc_hosps_ctx = document.getElementById('vacc_hosps').getContext('2d');
-        var vacc_deaths_ctx = document.getElementById('vacc_deaths').getContext('2d');
-        var vacc_cases_ag_ctx = document.getElementById('vacc_cases_ag').getContext('2d');
-        var vacc_hosps_ag_ctx = document.getElementById('vacc_hosps_ag').getContext('2d');
-        var vacc_deaths_ag_ctx = document.getElementById('vacc_deaths_ag').getContext('2d');
+        const vacc_cases_ctx = document.getElementById('vacc_cases').getContext('2d');
+        const vacc_hosps_ctx = document.getElementById('vacc_hosps').getContext('2d');
+        const vacc_deaths_ctx = document.getElementById('vacc_deaths').getContext('2d');
+        const vacc_cases_ag_ctx = document.getElementById('vacc_cases_ag').getContext('2d');
+        const vacc_hosps_ag_ctx = document.getElementById('vacc_hosps_ag').getContext('2d');
+        const vacc_deaths_ag_ctx = document.getElementById('vacc_deaths_ag').getContext('2d');
 
-        var case_pie_ctx = document.getElementById('case_pie').getContext('2d');
-        var hosp_pie_ctx = document.getElementById('hosp_pie').getContext('2d');
-        var death_pie_ctx = document.getElementById('death_pie').getContext('2d');
+        const case_pie_ctx = document.getElementById('case_pie').getContext('2d');
+        const hosp_pie_ctx = document.getElementById('hosp_pie').getContext('2d');
+        const death_pie_ctx = document.getElementById('death_pie').getContext('2d');
+
+        const range_ui = document.getElementsByClassName("range-input-range")[0];
+        const thumb_left_ui = document.getElementsByClassName("range-input-thumb-left")[0];
+        const thubb_right_ui = document.getElementsByClassName("range-input-thumb-right")[0];
+        const min_input_ui = document.getElementById("min-input");
+        const max_input_ui = document.getElementById("max-input");
+        const min_value_ui = document.getElementById("value-min");
+        const max_value_ui = document.getElementById("value-max");
+
+        var dates = [];
 
         var cases_chart;
         var hosps_chart;
@@ -494,13 +658,38 @@
             }
         }
 
+        function update_range() {
+            let new_min = parseInt(min_input_ui.value);
+            let new_max = parseInt(max_input_ui.value);
+            cases_chart.options.scales.x = {
+                min: new_min,
+                max: new_max,
+                stacked: true,
+            };
+            cases_chart.update();
+
+            hosps_chart.options.scales.x = {
+                min: new_min,
+                max: new_max,
+                stacked: true,
+            };
+            hosps_chart.update();
+
+            deaths_chart.options.scales.x = {
+                min: new_min,
+                max: new_max,
+                stacked: true,
+            };
+            deaths_chart.update();
+        }
+
 
         fetch(API_URL)
             .then(res => res.json())
             .then(out => {
 
                 let date_source_ui = document.getElementById('date-source');
-                date_source_ui.innerText = new Date(out.sourceDate).toLocaleDateString().replaceAll("/", ".");
+                date_source_ui.innerText = new Date(out.sourceDate).toLocaleDateString("de-CH").replaceAll("/", ".");
 
 
                 fetch(recLookup(out, CASE_VACC_PATH))
@@ -515,7 +704,14 @@
                         fill_summary_widget(completion.case.vacc, completion.case.total, "case_percent", case_pie_ctx);
 
                         let range_max_date_ui = document.getElementById('range-max-date');
-                        range_max_date_ui.innerText = new Date(out[out.length - 1].date).toLocaleDateString().replaceAll("/", ".");
+                        range_max_date_ui.innerText = new Date(out[out.length - 1].date).toLocaleDateString("de-CH").replaceAll("/", ".");
+
+                        dates = out.map(el => new Date(el.date).toLocaleDateString("de-CH").replaceAll("/", "."));
+                        min_input_ui.max = dates.length - 1;
+                        max_input_ui.max = dates.length - 1;
+                        max_input_ui.value = dates.length - 1;
+                        min_value_ui.innerHTML = dates[min_input_ui.value];
+                        max_value_ui.innerHTML = dates[max_input_ui.value];
                     })
                     .catch(err => { console.log(err) });
                 fetch(recLookup(out, CASE_PATH))
@@ -639,6 +835,34 @@
 
             })
             .catch(err => { console.log(err) });
+
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            document.getElementById("min-input").addEventListener("input", (e) => {
+                min_input_ui.value = Math.min(min_input_ui.value, max_input_ui.value);
+                let value = (min_input_ui.value / parseInt(min_input_ui.max)) * 100;
+                range_ui.style.left = value + '%';
+                thumb_left_ui.style.left = value + '%';
+                min_value_ui.innerHTML = dates[min_input_ui.value];
+            });
+
+            document.getElementById("max-input").addEventListener("input", (e) => {
+                max_input_ui.value = Math.max(max_input_ui.value, min_input_ui.value);
+                let value = (max_input_ui.value / parseInt(max_input_ui.max)) * 100;
+                range_ui.style.right = (100 - value) + '%';
+                thubb_right_ui.style.left = value + '%';
+                max_value_ui.innerHTML = dates[max_input_ui.value];
+            });
+
+            document.getElementById("min-input").addEventListener("change", (e) => {
+                update_range();
+            });
+            document.getElementById("max-input").addEventListener("change", (e) => {
+                update_range();
+            });
+        });
     </script>
 </body>
 
