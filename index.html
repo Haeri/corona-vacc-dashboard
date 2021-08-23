@@ -57,6 +57,10 @@
             display: block;
         }
 
+        #date-source{
+            vertical-align: middle;
+        }
+
         .totals-wrapper {
             display: flex;
             justify-content: space-between;
@@ -68,16 +72,15 @@
         }
 
         .pie-wrapper {
+            margin-top: 20px;
             position: relative;
-            display: block;
+            display: inline-block;
         }
 
         .pie-label-wrapper {
-            aspect-ratio: 1.04;
             padding: 15px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            width: 65px;
+            height: 65px;
         }
 
         .totals-wrapper h2,
@@ -201,33 +204,47 @@
             <small>DISCLAIMER: This is not an official communication channel. No guarantees are given about the
                 correctness of the presented data. For the official communication, please refer to the <a
                     href="https://www.covid19.admin.ch/de/overview" target="_blank">BAG Dashboard</a>.</small>
+            <h5>Dataset updated on: <span id="date-source">
+                    <div class="lds-ripple"></div>
+                </span></h5>
         </div>
-        <section class="totals-wrapper">
+        <section class="totals-wrapper" id="summary">
             <div>
                 <h4>Cases</h4>
+
+                <h2 id="vacc_cases_sum">
+                    <div class="lds-ripple"></div>
+                </h2>
+                <h5>out of</h5>
+                <h2 id="total_cases_sum">
+                    <div class="lds-ripple"></div>
+                </h2>
                 <div class="pie-wrapper">
-                    <canvas class="pie_stats" id="case_pie" width="100" height="100"></canvas>
+                    <canvas class="pie_stats" id="case_pie" width="10" height="10"></canvas>
                     <div class="pie-label-wrapper">
-                        <h2 id="vacc_cases_sum">
-                            <div class="lds-ripple"></div>
-                        </h2>
-                        <h5>out of</h5>
-                        <h2 id="total_cases_sum">
-                            <div class="lds-ripple"></div>
-                        </h2>
+                        <h5>est. efficacy</h5>
+                        <div>
+                            <h2 id="case_percent">
+                                <div class="lds-ripple"></div>
+                            </h2>
+                        </div>
                     </div>
                 </div>
             </div>
             <div>
                 <h4>Hospitalizations</h4>
+                <h2 id="vacc_hosps_sum">
+                    <div class="lds-ripple"></div>
+                </h2>
+                <h5>out of</h5>
+                <h2 id="total_hosps_sum">
+                    <div class="lds-ripple"></div>
+                </h2>
                 <div class="pie-wrapper">
                     <canvas class="pie_stats" id="hosp_pie" width="100" height="100"></canvas>
                     <div class="pie-label-wrapper">
-                        <h2 id="vacc_hosps_sum">
-                            <div class="lds-ripple"></div>
-                        </h2>
-                        <h5>out of</h5>
-                        <h2 id="total_hosps_sum">
+                        <h5>est. efficacy</h5>
+                        <h2 id="hosp_percent">
                             <div class="lds-ripple"></div>
                         </h2>
                     </div>
@@ -235,42 +252,46 @@
             </div>
             <div>
                 <h4>Deaths</h4>
+                <h2 id="vacc_deaths_sum">
+                    <div class="lds-ripple"></div>
+                </h2>
+                <h5>out of</h5>
+                <h2 id="total_deaths_sum">
+                    <div class="lds-ripple"></div>
+                </h2>
                 <div class="pie-wrapper">
                     <canvas class="pie_stats" id="death_pie" width="100" height="100"></canvas>
                     <div class="pie-label-wrapper">
-                        <h2 id="vacc_deaths_sum">
-                            <div class="lds-ripple"></div>
-                        </h2>
-                        <h5>out of</h5>
-                        <h2 id="total_deaths_sum">
+                        <h5>est. efficacy</h5>
+                        <h2 id="death_percent">
                             <div class="lds-ripple"></div>
                         </h2>
                     </div>
                 </div>
             </div>
         </section>
-        <section>
+        <section id="cases">
             <h3>Daily cases with fully vaccinated people</h3>
             <canvas id="vacc_cases" class="loading" width="400" height="300"></canvas>
         </section>
-        <section>
+        <section id="hospitalizations">
             <h3>Daily hospitalizations of fully vaccinated people</h3>
             <canvas id="vacc_hosps" width="400" height="300"></canvas>
         </section>
-        <section>
+        <section id="deaths">
             <h3>Daily deaths of fully vaccinated people</h3>
             <canvas id="vacc_deaths" width="400" height="300"></canvas>
         </section>
         <hr>
-        <section>
+        <section id="cases-ag">
             <h3>Weekly cases with fully vaccinated people by age groups</h3>
             <canvas id="vacc_cases_ag" width="400" height="300"></canvas>
         </section>
-        <section>
+        <section id="hospitalization-ag">
             <h3>Weekly hospitalizations of fully vaccinated people by age groups</h3>
             <canvas id="vacc_hosps_ag" width="400" height="300"></canvas>
         </section>
-        <section>
+        <section id="deaths-ag">
             <h3>Weekly deaths of fully vaccinated people by age groups</h3>
             <canvas id="vacc_deaths_ag" width="400" height="300"></canvas>
         </section>
@@ -433,13 +454,13 @@
         }
 
         function buildPie(ctx, data) {
+            let color = value2Color(data[0], data[0] + data[1], [30, 255, 30], [255, 30, 30]);
             var myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ["Fully Vacc", "Non Vacc"],
                     datasets: [{
                         data: data,
-                        backgroundColor: ['#1eff1e', '#71717161'],
+                        backgroundColor: ['#71717161', color],
                         borderWidth: 0,
                         cutout: "95%"
                     }]
@@ -456,11 +477,24 @@
             return myChart;
         }
 
+        function fill_summary_widget(vacc, total, element_id, ctx) {
+            if (vacc && total) {
+                let data = [vacc, total - vacc];
+
+                let percent = Math.floor(((total - vacc) / total) * 100);
+                document.getElementById(element_id).innerText = percent + "%";
+                buildPie(ctx, data);
+            }
+        }
 
 
         fetch(API_URL)
             .then(res => res.json())
             .then(out => {
+
+                let date_source_ui = document.getElementById('date-source');
+                date_source_ui.innerText = new Date(out.sourceDate).toLocaleDateString().replaceAll("/", ".");
+
 
                 fetch(recLookup(out, CASE_VACC_PATH))
                     .then(res => res.json())
@@ -470,10 +504,9 @@
                         completion.case.vacc = out.pop().sumTotal
                         el.innerText = numberWithCommas(completion.case.vacc);
 
-                        if (completion.case.total) {
-                            let data = [completion.case.vacc, completion.case.total - completion.case.vacc];
-                            buildPie(case_pie_ctx, data);
-                        }
+
+                        fill_summary_widget(completion.case.vacc, completion.case.total, "case_percent", case_pie_ctx);
+
                     })
                     .catch(err => { console.log(err) });
                 fetch(recLookup(out, CASE_PATH))
@@ -496,12 +529,9 @@
                         completion.case.total = out.pop().sumTotal
                         el.innerText = numberWithCommas(completion.case.total);
 
-                        if (completion.case.vacc) {
-                            let data = [completion.case.vacc, completion.case.total - completion.case.vacc];
 
-                            console.log(completion.case.vacc, completion.case.total, data);
-                            buildPie(case_pie_ctx, data);
-                        }
+                        fill_summary_widget(completion.case.vacc, completion.case.total, "case_percent", case_pie_ctx);
+
                     })
                     .catch(err => { console.log(err) });
 
@@ -510,14 +540,11 @@
                     .then(res => res.json())
                     .then(out => {
                         hosps_chart = buildChart(vacc_hosps_ctx, out, 'Vully Vaccinated');
-                        let el = document.getElementById('vacc_hosps_sum');                        
+                        let el = document.getElementById('vacc_hosps_sum');
                         completion.hosp.vacc = out.pop().sumTotal
                         el.innerText = numberWithCommas(completion.hosp.vacc);
 
-                        if (completion.hosp.total) {
-                            let data = [completion.hosp.vacc, completion.hosp.total - completion.hosp.vacc];
-                            buildPie(hosp_pie_ctx, data);
-                        }
+                        fill_summary_widget(completion.hosp.vacc, completion.hosp.total, "hosp_percent", hosp_pie_ctx);
                     })
                     .catch(err => { console.log(err) });
                 fetch(recLookup(out, HOSP_PATH))
@@ -540,12 +567,7 @@
                         completion.hosp.total = out.pop().sumTotal
                         el.innerText = numberWithCommas(completion.hosp.total);
 
-                        if (completion.hosp.vacc) {
-                            let data = [completion.hosp.vacc, completion.hosp.total - completion.hosp.vacc];
-
-                            console.log(completion.hosp.vacc, completion.hosp.total, data);
-                            buildPie(hosp_pie_ctx, data);
-                        }
+                        fill_summary_widget(completion.hosp.vacc, completion.hosp.total, "hosp_percent", hosp_pie_ctx);
                     })
                     .catch(err => { console.log(err) });
 
@@ -559,10 +581,7 @@
                         completion.death.vacc = out.pop().sumTotal
                         el.innerText = numberWithCommas(completion.death.vacc);
 
-                        if (completion.death.total) {
-                            let data = [completion.death.vacc, completion.death.total - completion.death.vacc];
-                            buildPie(death_pie_ctx, data);
-                        }
+                        fill_summary_widget(completion.death.vacc, completion.death.total, "death_percent", death_pie_ctx);
                     })
                     .catch(err => { console.log(err) });
                 fetch(recLookup(out, DEATH_PATH))
@@ -585,12 +604,7 @@
                         completion.death.total = out.pop().sumTotal
                         el.innerText = numberWithCommas(completion.death.total);
 
-                        if (completion.death.vacc) {
-                            let data = [completion.death.vacc, completion.death.total - completion.death.vacc];
-
-                            console.log(completion.death.vacc, completion.death.total, data);
-                            buildPie(death_pie_ctx, data);
-                        }
+                        fill_summary_widget(completion.death.vacc, completion.death.total, "death_percent", death_pie_ctx);
                     })
                     .catch(err => { console.log(err) });
 
