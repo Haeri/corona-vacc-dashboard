@@ -131,6 +131,11 @@ canvas {
     /*min-height: 160px;*/
 }
 
+#date-range{
+    position: sticky;
+    top: 36px;
+}
+
 .info-wrapper,
 .totals-wrapper,
 #date-range,
@@ -241,8 +246,8 @@ div.range-input-slider>input[type=range]::-ms-tooltip {
 }
 
 .range-input-sign {
+    padding: 1px 4px;
     font-size: 12px;
-    padding: 1px ​4px;
     background: var(--element-gray);
 }
 
