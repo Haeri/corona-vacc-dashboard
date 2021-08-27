@@ -29,8 +29,8 @@
             <h5>Dataset updated on: <span class="v-centered" id="date-source">
                     <div class="lds-ripple"></div>
                 </span></h5>
-            <h5>Calculations based on the time period<br>from 27.01.2021 to <span class="v-centered"
-                    id="range-max-date">
+            <h5 style="display: none;">Calculations based on the time period<br>from 27.01.2021 to <span
+                    class="v-centered" id="range-max-date">
                     <div class="lds-ripple"></div>
                 </span></h5>
             </h5>
@@ -39,70 +39,83 @@
 
         <section class="totals-wrapper" id="summary">
             <div>
-                <h4>Cases</h4>
+                <div>
+                    <h4>Cases</h4>
 
-                <h2 id="vacc_cases_sum">
-                    <div class="lds-ripple"></div>
-                </h2>
-                <h5>out of</h5>
-                <h2 id="total_cases_sum">
-                    <div class="lds-ripple"></div>
-                </h2>
-                <div class="pie-wrapper">
-                    <canvas class="pie_stats" id="case_pie" width="10" height="10"></canvas>
-                    <div class="pie-label-wrapper">
-                        <h5
-                            title="DISCLAIMER: This is an ad-hoc calculation and does not consider all relevant factors yet.">
-                            avg. efficacy</h5>
-                        <div>
-                            <h2 id="case_efficacy">
+                    <h2 id="vacc_cases_sum">
+                        <div class="lds-ripple"></div>
+                    </h2>
+                    <h5>out of</h5>
+                    <h2 id="total_cases_sum">
+                        <div class="lds-ripple"></div>
+                    </h2>
+                    <div class="pie-wrapper">
+                        <canvas class="pie_stats" id="case_pie" width="10" height="10"></canvas>
+                        <div class="pie-label-wrapper">
+                            <h5 title="">
+                                avg. efficacy</h5>
+                            <div>
+                                <h2 id="case_efficacy">
+                                    <div class="lds-ripple"></div>
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h4>Hospitalizations</h4>
+                    <h2 id="vacc_hosps_sum">
+                        <div class="lds-ripple"></div>
+                    </h2>
+                    <h5>out of</h5>
+                    <h2 id="total_hosps_sum">
+                        <div class="lds-ripple"></div>
+                    </h2>
+                    <div class="pie-wrapper">
+                        <canvas class="pie_stats" id="hosp_pie" width="100" height="100"></canvas>
+                        <div class="pie-label-wrapper">
+                            <h5 title="">
+                                avg. efficacy</h5>
+                            <h2 id="hosp_efficacy">
+                                <div class="lds-ripple"></div>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h4>Deaths</h4>
+                    <h2 id="vacc_deaths_sum">
+                        <div class="lds-ripple"></div>
+                    </h2>
+                    <h5>out of</h5>
+                    <h2 id="total_deaths_sum">
+                        <div class="lds-ripple"></div>
+                    </h2>
+                    <div class="pie-wrapper">
+                        <canvas class="pie_stats" id="death_pie" width="100" height="100"></canvas>
+                        <div class="pie-label-wrapper">
+                            <h5 title="">
+                                avg. efficacy</h5>
+                            <h2 id="death_efficacy">
                                 <div class="lds-ripple"></div>
                             </h2>
                         </div>
                     </div>
                 </div>
             </div>
-            <div>
-                <h4>Hospitalizations</h4>
-                <h2 id="vacc_hosps_sum">
-                    <div class="lds-ripple"></div>
-                </h2>
-                <h5>out of</h5>
-                <h2 id="total_hosps_sum">
-                    <div class="lds-ripple"></div>
-                </h2>
-                <div class="pie-wrapper">
-                    <canvas class="pie_stats" id="hosp_pie" width="100" height="100"></canvas>
-                    <div class="pie-label-wrapper">
-                        <h5
-                            title="DISCLAIMER: This is an ad-hoc calculation and does not consider all relevant factors yet.">
-                            avg. efficacy</h5>
-                        <h2 id="hosp_efficacy">
-                            <div class="lds-ripple"></div>
-                        </h2>
-                    </div>
-                </div>
-            </div>
-            <div>
-                <h4>Deaths</h4>
-                <h2 id="vacc_deaths_sum">
-                    <div class="lds-ripple"></div>
-                </h2>
-                <h5>out of</h5>
-                <h2 id="total_deaths_sum">
-                    <div class="lds-ripple"></div>
-                </h2>
-                <div class="pie-wrapper">
-                    <canvas class="pie_stats" id="death_pie" width="100" height="100"></canvas>
-                    <div class="pie-label-wrapper">
-                        <h5
-                            title="DISCLAIMER: This is an ad-hoc calculation and does not consider all relevant factors yet.">
-                            avg. efficacy</h5>
-                        <h2 id="death_efficacy">
-                            <div class="lds-ripple"></div>
-                        </h2>
-                    </div>
-                </div>
+            <br><br>
+            <h5>The calculation is done for the weekly numbers and then averaged. The efficacy is calculated with the
+                following formula: <a href="#" class="collapse-toggle" data-target="#collapse-formula">show</a></h5>
+            <br>
+            <div class="collapse" id="collapse-formula">
+                <small>
+                    <pre>vacc_num: number of incidents with vaccinated people
+vacc_pop: number of vaccinated people in the population
+unvacc_num: number of incidents with unvaccinated people
+unvacc_pop: number of unvaccinated people in the population
+
+(1 - (vacc_num / vacc_pop × 100) / (unvacc_num / unvacc_pop × 100)) × 100)</pre>
+                </small>
             </div>
         </section>
 

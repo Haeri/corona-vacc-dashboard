@@ -4,6 +4,7 @@ const COLORS_RED = { rgb: [244, 67, 54], hex: "#f44336" };
 const COLORS_YELLOW = { rgb: [255, 235, 59], hex: "#ffeb3b" };
 const COLORS_GRAY = "#71717161";
 
+const START_DATE = Date.parse('2021-01-27');
 const START_WEEK = 202104;
 
 const API_URL = "https://www.covid19.admin.ch/api/data/context";
@@ -41,9 +42,9 @@ const vacc_cases_ag_ctx = document.getElementById('vacc_cases_ag').getContext('2
 const vacc_hosps_ag_ctx = document.getElementById('vacc_hosps_ag').getContext('2d');
 const vacc_deaths_ag_ctx = document.getElementById('vacc_deaths_ag').getContext('2d');
 
-const case_pie_ctx = document.getElementById('case_pie').getContext('2d');
-const hosp_pie_ctx = document.getElementById('hosp_pie').getContext('2d');
-const death_pie_ctx = document.getElementById('death_pie').getContext('2d');
+const case_efficacy_pie_ctx = document.getElementById('case_pie').getContext('2d');
+const hosp_efficacy_pie_ctx = document.getElementById('hosp_pie').getContext('2d');
+const death_efficacy_pie_ctx = document.getElementById('death_pie').getContext('2d');
 const efficacy_timeline_ctx = document.getElementById('efficacy_timeline').getContext('2d');
 
 const range_track_ui = document.getElementsByClassName("range-input-track")[0];
@@ -81,6 +82,9 @@ var dataset_efficacy_hosps = [];
 var dataset_efficacy_deaths = [];
 var dates = [];
 
+var case_efficacy_pie_chart;
+var hosp_efficacy_pie_chart;
+var death_efficacy_pie_chart;
 var efficacy_chart;
 var cases_chart;
 var hosps_chart;
@@ -205,7 +209,7 @@ function buildChartAg(ctx, data, label) {
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: Object.keys(group_by(data, "date")),
+            labels: Object.keys(group_by(data, "date")).map(el => parseInt(el)),
             datasets: dataset
         },
         options: {
@@ -253,7 +257,7 @@ function buildPie(ctx, data) {
 
 // ---------------- TIMELINE ---------------- //
 
-function buildTimeline() {
+function build_timeline_chart() {
     efficacy_chart = new Chart(efficacy_timeline_ctx, {
         type: 'line',
         data: {
@@ -286,12 +290,12 @@ function buildTimeline() {
         }
     });
 }
-function setTimelineData(index, data) {
+function set_timeline_chart_data(index, data) {
     efficacy_chart.data.datasets[index].data = data.map(el => el.efficacy);
     efficacy_chart.data.labels = data.map(el => el.date);
     efficacy_chart.update();
 }
-function updateTimelineRange(week_min, week_max) {
+function update_timeline_chart_range(week_min, week_max) {
     efficacy_chart.options.scales.x = {
         min: week_min,
         max: week_max
@@ -300,21 +304,58 @@ function updateTimelineRange(week_min, week_max) {
 }
 
 
+function build_efficacy_chart(ctx) {
+    var chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [],
+                backgroundColor: [COLORS_GRAY, COLORS_GREEN],
+                borderWidth: 0,
+                cutout: "95%"
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    display: false,
+                },
+            }
+        }
+    });
 
-function buildEfficacy(ctx, vacc_weekly, total_weekly, dataset_efficacy, total_sum_ui, vacc_sum_ui, efficacy_ui, index) {
+    return chart;
+}
+function set_efficacy_chart_data(chart, percent) {
+    chart.data.datasets[0].data = [100 - percent, percent];
+    chart.data.datasets[0].backgroundColor[1] = value2Color(percent, 100, COLORS_RED.rgb, COLORS_GREEN.rgb);
+    chart.update();
+}
+
+
+
+
+
+
+function updateSummary(chart, dataset_efficacy, min_week, max_week, total_sum_ui, vacc_sum_ui, efficacy_ui) {
+    let { vacc, unvacc, efficacy } = calculate_efficacy_average(dataset_efficacy, min_week, max_week);
+
+    total_sum_ui.innerText = numberWithCommas(unvacc + vacc);
+    vacc_sum_ui.innerText = numberWithCommas(vacc);
+
+    efficacy_ui.innerText = parseFloat(efficacy.toFixed(1)) + "%";
+    let eff_int = parseInt(efficacy);
+    set_efficacy_chart_data(chart, eff_int);
+}
+
+
+function buildEfficacy(chart, vacc_weekly, total_weekly, total_sum_ui, vacc_sum_ui, efficacy_ui, index) {
     if (total_weekly.length && vacc_weekly.length) {
-        dataset_efficacy = generate_efficacy_dataset(vacc_weekly, total_weekly, START_WEEK, 202132);
+        let dataset_efficacy = generate_efficacy_dataset(vacc_weekly, total_weekly, START_WEEK, dates.weeks[dates.weeks.length - 1]);
 
-        let { vacc, unvacc, efficacy } = calculate_efficacy_average(dataset_efficacy, START_WEEK, 202132);
+        updateSummary(chart, dataset_efficacy, START_WEEK, dates.weeks[dates.weeks.length - 1], total_sum_ui, vacc_sum_ui, efficacy_ui);
 
-        total_sum_ui.innerText = numberWithCommas(unvacc + vacc);
-        vacc_sum_ui.innerText = numberWithCommas(vacc);
-        efficacy = efficacy.toFixed(1);
-        efficacy_ui.innerText = efficacy + "%";
-        let eff_int = parseInt(efficacy);
-        buildPie(ctx, [100 - eff_int, eff_int]);
-
-        setTimelineData(index, dataset_efficacy);
+        set_timeline_chart_data(index, dataset_efficacy);
 
         if (dataset_efficacy == dataset_cases_weekly) {
             setTimeout(() => {
@@ -323,22 +364,8 @@ function buildEfficacy(ctx, vacc_weekly, total_weekly, dataset_efficacy, total_s
                 favicon.href = canvas.toDataURL('image/png');
             }, 1000);
         }
-    }
-}
 
-
-function buildAllCharts() {
-
-}
-
-
-function fill_summary_widget(vacc, total, element_id, ctx) {
-    if (vacc && total) {
-        let data = [vacc, total - vacc];
-
-        let percent = Math.floor(((total - vacc) / total) * 100);
-        document.getElementById(element_id).innerText = percent + "%";
-        buildPie(ctx, data);
+        return dataset_efficacy;
     }
 }
 
@@ -381,7 +408,35 @@ function update_range() {
 
     let week_min = dates.weeks[new_min];
     let week_max = dates.weeks[new_max];
-    updateTimelineRange(week_min, week_max);
+
+    update_timeline_chart_range(week_min, week_max);
+
+    cases_ag_chart.options.scales.x = {
+        min: week_min,
+        max: week_max,
+        stacked: true,
+    };
+    cases_ag_chart.update();
+
+    hosps_ag_chart.options.scales.x = {
+        min: week_min,
+        max: week_max,
+        stacked: true,
+    };
+    hosps_ag_chart.update();
+
+    deaths_ag_chart.options.scales.x = {
+        min: week_min,
+        max: week_max,
+        stacked: true,
+    };
+    deaths_ag_chart.update();
+
+
+
+    updateSummary(case_efficacy_pie_chart, dataset_efficacy_cases, week_min, week_max, total_cases_sum_ui, vacc_cases_sum_ui, case_efficacy_ui);
+    updateSummary(hosp_efficacy_pie_chart, dataset_efficacy_hosps, week_min, week_max, total_hosps_sum_ui, vacc_hosps_sum_ui, hosp_efficacy_ui);
+    updateSummary(death_efficacy_pie_chart, dataset_efficacy_deaths, week_min, week_max, total_deaths_sum_ui, vacc_deaths_sum_ui, death_efficacy_ui);
 }
 
 
@@ -459,7 +514,7 @@ fetch(API_URL)
 
                 dates.weeks.forEach((el, i) => {
                     let elem = document.createElement("span");
-                    if(dates.weeks[i-1] !== el){
+                    if (dates.weeks[i - 1] !== el) {
                         elem.className = "mark";
                     }
                     range_track_ui.appendChild(elem);
@@ -469,9 +524,7 @@ fetch(API_URL)
         fetch(recLookup(out, CASE_PATH))
             .then(res => res.json())
             .then(out => {
-
-                let min_date = Date.parse('2021-01-27');
-                let data = out.filter(el => min_date <= Date.parse(el.datum));
+                let data = out.filter(el => START_DATE <= Date.parse(el.datum));
                 data = {
                     label: 'Total',
                     data: data.map(el => el.entries),
@@ -481,7 +534,6 @@ fetch(API_URL)
 
                 cases_chart.data.datasets.push(data);
                 cases_chart.update();
-
             })
             .catch(err => { console.log(err) });
 
@@ -495,9 +547,7 @@ fetch(API_URL)
         fetch(recLookup(out, HOSP_PATH))
             .then(res => res.json())
             .then(out => {
-
-                let min_date = Date.parse('2021-01-27');
-                let data = out.filter(el => min_date <= Date.parse(el.datum));
+                let data = out.filter(el => START_DATE <= Date.parse(el.datum));
                 data = {
                     label: 'Total',
                     data: data.map(el => el.entries),
@@ -521,9 +571,7 @@ fetch(API_URL)
         fetch(recLookup(out, DEATH_PATH))
             .then(res => res.json())
             .then(out => {
-
-                let min_date = Date.parse('2021-01-27');
-                let data = out.filter(el => min_date <= Date.parse(el.datum));
+                let data = out.filter(el => START_DATE <= Date.parse(el.datum));
                 data = {
                     label: 'Total',
                     data: data.map(el => el.entries),
@@ -573,7 +621,7 @@ fetch(API_URL)
                     pop: el.pop
                 }));
 
-                buildEfficacy(case_pie_ctx, dataset_vacc_cases_weekly, dataset_cases_weekly, dataset_efficacy_cases, total_cases_sum_ui, vacc_cases_sum_ui, case_efficacy_ui, 0);
+                dataset_efficacy_cases = buildEfficacy(case_efficacy_pie_chart, dataset_vacc_cases_weekly, dataset_cases_weekly, total_cases_sum_ui, vacc_cases_sum_ui, case_efficacy_ui, 0);
             })
             .catch(err => { console.log(err) });
         fetch(recLookup(out, HOSP_WEEKLY_PATH))
@@ -586,7 +634,7 @@ fetch(API_URL)
                     pop: el.pop
                 }));
 
-                buildEfficacy(hosp_pie_ctx, dataset_vacc_hosps_weekly, dataset_hosps_weekly, dataset_efficacy_hosps, total_hosps_sum_ui, vacc_hosps_sum_ui, hosp_efficacy_ui, 1);
+                dataset_efficacy_hosps = buildEfficacy(hosp_efficacy_pie_chart, dataset_vacc_hosps_weekly, dataset_hosps_weekly, total_hosps_sum_ui, vacc_hosps_sum_ui, hosp_efficacy_ui, 1);
             })
             .catch(err => { console.log(err) });
         fetch(recLookup(out, DEATH_WEEKLY_PATH))
@@ -598,7 +646,7 @@ fetch(API_URL)
                     entries: el.entries,
                     pop: el.pop
                 }));
-                buildEfficacy(death_pie_ctx, dataset_vacc_deaths_weekly, dataset_deaths_weekly, dataset_efficacy_deaths, total_deaths_sum_ui, vacc_deaths_sum_ui, death_efficacy_ui, 2);
+                dataset_efficacy_deaths = buildEfficacy(death_efficacy_pie_chart, dataset_vacc_deaths_weekly, dataset_deaths_weekly, total_deaths_sum_ui, vacc_deaths_sum_ui, death_efficacy_ui, 2);
             })
             .catch(err => { console.log(err) });
 
@@ -611,7 +659,7 @@ fetch(API_URL)
                     entries: el.entries
                 }));
 
-                buildEfficacy(case_pie_ctx, dataset_vacc_cases_weekly, dataset_cases_weekly, dataset_efficacy_cases, total_cases_sum_ui, vacc_cases_sum_ui, case_efficacy_ui, 0);
+                dataset_efficacy_cases = buildEfficacy(case_efficacy_pie_chart, dataset_vacc_cases_weekly, dataset_cases_weekly, total_cases_sum_ui, vacc_cases_sum_ui, case_efficacy_ui, 0);
             })
             .catch(err => { console.log(err) });
         fetch(recLookup(out, HOSP_VACC_SEX_PATH))
@@ -623,7 +671,7 @@ fetch(API_URL)
                     entries: el.entries
                 }));
 
-                buildEfficacy(hosp_pie_ctx, dataset_vacc_hosps_weekly, dataset_hosps_weekly, dataset_efficacy_hosps, total_hosps_sum_ui, vacc_hosps_sum_ui, hosp_efficacy_ui, 1);
+                dataset_efficacy_hosps = buildEfficacy(hosp_efficacy_pie_chart, dataset_vacc_hosps_weekly, dataset_hosps_weekly, total_hosps_sum_ui, vacc_hosps_sum_ui, hosp_efficacy_ui, 1);
             })
             .catch(err => { console.log(err) });
         fetch(recLookup(out, DEATH_VACC_SEX_PATH))
@@ -635,7 +683,7 @@ fetch(API_URL)
                     entries: el.entries
                 }));
 
-                buildEfficacy(death_pie_ctx, dataset_vacc_deaths_weekly, dataset_deaths_weekly, dataset_efficacy_deaths, total_deaths_sum_ui, vacc_deaths_sum_ui, death_efficacy_ui, 2);
+                dataset_efficacy_deaths = buildEfficacy(death_efficacy_pie_chart, dataset_vacc_deaths_weekly, dataset_deaths_weekly, total_deaths_sum_ui, vacc_deaths_sum_ui, death_efficacy_ui, 2);
             })
             .catch(err => { console.log(err) });
 
@@ -648,7 +696,12 @@ fetch(API_URL)
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    buildTimeline();
+
+    case_efficacy_pie_chart = build_efficacy_chart(case_efficacy_pie_ctx);
+    hosp_efficacy_pie_chart = build_efficacy_chart(hosp_efficacy_pie_ctx);
+    death_efficacy_pie_chart = build_efficacy_chart(death_efficacy_pie_ctx);
+
+    build_timeline_chart();
 
     document.getElementById("min-input").addEventListener("input", (e) => {
         min_input_ui.value = Math.min(min_input_ui.value, max_input_ui.value);
@@ -672,6 +725,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("max-input").addEventListener("change", (e) => {
         update_range();
     });
+
+    [...document.getElementsByClassName("collapse-toggle")].forEach(el => {
+        el.addEventListener("click", (e) => {
+            e.preventDefault();
+            let target = document.querySelector(e.target.dataset.target);
+            if (target.classList.contains("open")) {
+                target.classList.remove("open");
+                e.target.innerText = "show";
+            } else {
+                target.classList.add("open");
+                e.target.innerText = "hide";
+            }
+            return false;
+        });
+    });
+
 
     //update_range();
 });

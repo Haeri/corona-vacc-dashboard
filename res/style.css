@@ -29,6 +29,10 @@ body:after {
     opacity: .06;
 }
 
+h5{
+    color: darkgray;
+}
+
 .main-wrapper {
     padding: 0px 30px;
     max-width: 900px;
@@ -40,7 +44,12 @@ body:after {
     max-width: 700px;
 }
 
+pre{
+    margin: 0;
+}
+
 small {
+    overflow-x: auto;
     line-height: 16px;
     font-size: 11px;
     color: #777777;
@@ -49,16 +58,12 @@ small {
     border: 1px dashed var(--element-gray);
 }
 
-.v-centered {
-    /*vertical-align: middle;*/
-}
-
-.totals-wrapper {
+.totals-wrapper > div {
     display: flex;
     justify-content: space-between;
 }
 
-.totals-wrapper>div {
+.totals-wrapper>div>div {
     text-align: center;
     width: min-content;
 }
@@ -71,8 +76,8 @@ small {
 
 .pie-label-wrapper {
     padding: 15px;
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -120,6 +125,10 @@ canvas {
     top: 0;
     margin: 0;
     z-index: -1;
+}
+
+#efficacy_timeline{
+    /*min-height: 160px;*/
 }
 
 .info-wrapper,
@@ -292,9 +301,28 @@ div.range-input-slider>input[type=range]::-ms-tooltip {
     }
 }
 
+.collapse{
+    max-height: 0px;
+    transition: 0.3s;
+    overflow: hidden;
+}
+
+.collapse.open{
+    max-height: 999px;
+}
+
 @media only screen and (max-width: 800px) {
+    h2 {
+        font-size: 1.3em;
+    }
+
     .main-wrapper {
         padding: 0px 20px;
+    }
+        
+    .pie-label-wrapper {
+        width: 60px;
+        height: 60px;
     }
 
     .info-wrapper,
