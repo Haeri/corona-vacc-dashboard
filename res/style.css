@@ -33,6 +33,37 @@ h5{
     color: darkgray;
 }
 
+#status_info{
+    background: #1c1c1cdb;
+    padding: 8px 10px;
+    backdrop-filter: blur(10px);
+    border-radius: 5px 0 0 0;
+    position: fixed;
+    bottom: 0px;
+    right: 0px;
+    display: flex;
+    gap: 6px;
+    transition: 0.6s;
+}
+#status_info.completed{
+    opacity: 0;
+}
+
+.req-status {
+    width: 9px;
+    height: 9px;
+    display: block;
+    background: transparent;
+    border-radius: 100%;
+    border: 1px dashed gray;
+    animation: rotating 2s linear infinite;
+    transition: 0.3s;
+}
+.req-status.completed {
+    animation: none;
+    border: 1px solid var(--main-green);
+}
+
 .main-wrapper {
     padding: 0px 30px;
     max-width: 900px;
@@ -133,7 +164,10 @@ canvas {
 
 #date-range{
     position: sticky;
-    top: 36px;
+    top: 0px;
+    display: flex;
+    background: #1c1c1cdb;
+    backdrop-filter: blur(10px);
 }
 
 .info-wrapper,
@@ -149,7 +183,8 @@ canvas {
     width: 100%;
     position: relative;
     height: 5px;
-    margin: 45px 0 0px 0;
+    margin-top: 40px;
+    height: 40px;
 }
 
 .range-input-slider>div>.range-input-track {
@@ -303,6 +338,16 @@ div.range-input-slider>input[type=range]::-ms-tooltip {
         width: 36px;
         height: 36px;
         opacity: 0;
+    }
+}
+
+
+@keyframes rotating {
+    from{
+        -webkit-transform: rotate(0deg);
+    }
+    to{
+        -webkit-transform: rotate(360deg);
     }
 }
 
