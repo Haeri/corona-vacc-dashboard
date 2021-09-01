@@ -567,13 +567,10 @@ fetch(API_URL)
 
                 build_absolute(dataset_vacc_cases, dataset_cases, total_cases_sum_ui, vacc_cases_sum_ui);
 
-                let range_max_date_ui = document.getElementById('range-max-date');
-                range_max_date_ui.innerText = convert_to_ch(out[out.length - 1].date);
-
                 dates = {
                     parsed: out.map(el => Date.parse(el.date)),
                     ch: out.map(el => convert_to_ch(el.date)),
-                    weeks: out.map(el => get_iso_week(new Date(el.date).toLocaleDateString())),
+                    weeks: out.map(el => get_iso_week(el.date)),
                 }
                 min_input_ui.max = dates.ch.length - 1;
                 max_input_ui.max = dates.ch.length - 1;
@@ -583,7 +580,7 @@ fetch(API_URL)
 
                 dates.weeks.forEach((el, i) => {
                     let elem = document.createElement("span");
-                    if (dates.weeks[i - 1] !== el) {
+                    if (i !== 0 && dates.weeks[i - 1] !== el) {
                         elem.className = "mark";
                         let week_num = document.createElement("p");
                         week_num.className = "week-mark-text";
