@@ -200,6 +200,14 @@ canvas {
 .range-input-track span.mark {
     height: 9px;
     margin-top: -4px;
+    position: relative;
+}
+.range-input-track p.week-mark-text {
+    position: absolute;
+    bottom: 0px;
+    font-size: 8px;
+    color: #525252;
+    left: 10px;
 }
 
 .range-input-slider>div>.range-input-range {
