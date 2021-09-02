@@ -1,3 +1,4 @@
+
 :root {
     --main-green: #4caf50;
     --element-gray: #444444;
@@ -36,14 +37,20 @@ h5{
 #status_info{
     background: #1c1c1cdb;
     padding: 8px 10px;
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
     border-radius: 5px 0 0 0;
     position: fixed;
     bottom: 0px;
     right: 0px;
+    display: -webkit-box;
+    display: -ms-flexbox;
     display: flex;
     gap: 6px;
+    -webkit-transition: 0.6s;
+    -o-transition: 0.6s;
     transition: 0.6s;
+    z-index: 1;
 }
 #status_info.completed{
     opacity: 0;
@@ -56,11 +63,15 @@ h5{
     background: transparent;
     border-radius: 100%;
     border: 1px dashed gray;
-    animation: rotating 2s linear infinite;
+    -webkit-animation: rotating 2s linear infinite;
+            animation: rotating 2s linear infinite;
+    -webkit-transition: 0.3s;
+    -o-transition: 0.3s;
     transition: 0.3s;
 }
 .req-status.completed {
-    animation: none;
+    -webkit-animation: none;
+            animation: none;
     border: 1px solid var(--main-green);
 }
 
@@ -90,12 +101,18 @@ small {
 }
 
 .totals-wrapper > div {
+    display: -webkit-box;
+    display: -ms-flexbox;
     display: flex;
-    justify-content: space-between;
+    -webkit-box-pack: justify;
+        -ms-flex-pack: justify;
+            justify-content: space-between;
 }
 
 .totals-wrapper>div>div {
     text-align: center;
+    width: -webkit-min-content;
+    width: -moz-min-content;
     width: min-content;
 }
 
@@ -109,9 +126,16 @@ small {
     padding: 15px;
     width: 80px;
     height: 80px;
+    display: -webkit-box;
+    display: -ms-flexbox;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+        -ms-flex-direction: column;
+            flex-direction: column;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
 }
 
 .totals-wrapper h2,
@@ -165,9 +189,12 @@ canvas {
 #date-range{
     position: sticky;
     top: 0px;
+    display: -webkit-box;
+    display: -ms-flexbox;
     display: flex;
     background: #1c1c1cdb;
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
 }
 
 .info-wrapper,
@@ -188,8 +215,12 @@ canvas {
 }
 
 .range-input-slider>div>.range-input-track {
+    display: -webkit-box;
+    display: -ms-flexbox;
     display: flex;
-    justify-content: space-between;
+    -webkit-box-pack: justify;
+        -ms-flex-pack: justify;
+            justify-content: space-between;
 }
 .range-input-track span {
     width: 1px;
@@ -285,6 +316,8 @@ div.range-input-slider>input[type=range]::-ms-tooltip {
     margin-right: -15px;
     border-radius: 100%;
     border: 1px solid var(--element-gray);
+    -webkit-transition: 0.3s background;
+    -o-transition: 0.3s background;
     transition: 0.3s background;
 }
 
@@ -324,11 +357,31 @@ div.range-input-slider>input[type=range]::-ms-tooltip {
     border: 2px solid #fff;
     opacity: 0.6;
     border-radius: 50%;
-    animation: lds-ripple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+    -webkit-animation: lds-ripple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+            animation: lds-ripple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
 }
 
 .lds-ripple:after {
-    animation-delay: -1s;
+    -webkit-animation-delay: -1s;
+            animation-delay: -1s;
+}
+
+@-webkit-keyframes lds-ripple {
+    0% {
+        top: 18px;
+        left: 18px;
+        width: 0;
+        height: 0;
+        opacity: 0.6;
+    }
+
+    100% {
+        top: 0px;
+        left: 0px;
+        width: 36px;
+        height: 36px;
+        opacity: 0;
+    }
 }
 
 @keyframes lds-ripple {
@@ -350,6 +403,16 @@ div.range-input-slider>input[type=range]::-ms-tooltip {
 }
 
 
+@-webkit-keyframes rotating {
+    from{
+        -webkit-transform: rotate(0deg);
+    }
+    to{
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+
 @keyframes rotating {
     from{
         -webkit-transform: rotate(0deg);
@@ -361,6 +424,8 @@ div.range-input-slider>input[type=range]::-ms-tooltip {
 
 .collapse{
     max-height: 0px;
+    -webkit-transition: 0.3s;
+    -o-transition: 0.3s;
     transition: 0.3s;
     overflow: hidden;
 }

@@ -100,7 +100,8 @@
                 </div>
             </div>
             <br><br>
-            <h5>*The efficacy is calculated by averaging weekly efficacy numbers. Weekly efficacy numbers are calculated with the
+            <h5>*The displayed efficacy is the average of calculated weekly efficacy numbers for the selected time
+                period. Weekly efficacy numbers are calculated with the
                 following formula: <a href="#" class="collapse-toggle" data-target="#collapse-formula">show</a></h5>
             <br>
             <div class="collapse" id="collapse-formula">
@@ -113,10 +114,6 @@ unvacc_pop: number of unvaccinated people in the population
 (1 - (vacc_num / vacc_pop × 100) / (unvacc_num / unvacc_pop × 100)) × 100)</pre>
                 </small>
             </div>
-        </section>
-
-        <section>
-            <canvas id="efficacy_timeline" width="400" height="100"></canvas>
         </section>
 
         <section id="date-range">
@@ -139,6 +136,10 @@ unvacc_pop: number of unvaccinated people in the population
                 <input id="min-input" type="range" value="0" max="100" min="0" step="1" />
                 <input id="max-input" type="range" value="100" max="100" min="0" step="1" />
             </div>
+        </section>
+
+        <section>
+            <canvas id="efficacy_timeline" width="400" height="100"></canvas>
         </section>
 
         <section id="cases">
