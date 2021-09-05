@@ -499,6 +499,33 @@ function update_range() {
 }
 
 
+function generate_dates(data){
+    if(dates.length !== 0) return;
+
+    dates = {
+        parsed: data.map(el => Date.parse(el.date)),
+        ch: data.map(el => convert_to_ch(el.date)),
+        weeks: data.map(el => get_iso_week(el.date)),
+    }
+    min_input_ui.max = dates.ch.length - 1;
+    max_input_ui.max = dates.ch.length - 1;
+    max_input_ui.value = dates.ch.length - 1;
+    min_value_ui.innerHTML = dates.ch[min_input_ui.value];
+    max_value_ui.innerHTML = dates.ch[max_input_ui.value];
+
+    dates.weeks.forEach((el, i) => {
+        let elem = document.createElement("span");
+        if (i !== 0 && dates.weeks[i - 1] !== el) {
+            elem.className = "mark";
+            let week_num = document.createElement("p");
+            week_num.className = "week-mark-text";
+            week_num.innerText = el.toString().substring(4);
+            elem.appendChild(week_num);
+        }
+        range_track_ui.appendChild(elem);
+    });
+}
+
 function generate_efficacy_dataset(vacc_data, tot_data, week_min, week_max) {
     vacc_data = vacc_data.filter(el => (el.date >= week_min && el.date <= week_max));
     tot_data = tot_data.filter(el => (el.date >= week_min && el.date <= week_max));
@@ -563,32 +590,11 @@ fetch(API_URL)
                     parse_date: Date.parse(el.date),
                     entries: el.entries
                 }));
+                generate_dates(out);
+
                 cases_chart = build_chart(vacc_cases_ctx, out, 'Vully Vaccinated');
 
-                build_absolute(dataset_vacc_cases, dataset_cases, total_cases_sum_ui, vacc_cases_sum_ui);
-
-                dates = {
-                    parsed: out.map(el => Date.parse(el.date)),
-                    ch: out.map(el => convert_to_ch(el.date)),
-                    weeks: out.map(el => get_iso_week(el.date)),
-                }
-                min_input_ui.max = dates.ch.length - 1;
-                max_input_ui.max = dates.ch.length - 1;
-                max_input_ui.value = dates.ch.length - 1;
-                min_value_ui.innerHTML = dates.ch[min_input_ui.value];
-                max_value_ui.innerHTML = dates.ch[max_input_ui.value];
-
-                dates.weeks.forEach((el, i) => {
-                    let elem = document.createElement("span");
-                    if (i !== 0 && dates.weeks[i - 1] !== el) {
-                        elem.className = "mark";
-                        let week_num = document.createElement("p");
-                        week_num.className = "week-mark-text";
-                        week_num.innerText = el.toString().substring(4);
-                        elem.appendChild(week_num);
-                    }
-                    range_track_ui.appendChild(elem);
-                });
+                build_absolute(dataset_vacc_cases, dataset_cases, total_cases_sum_ui, vacc_cases_sum_ui);                
             })
             .catch(err => { console.log(err) });
         fetch(path_lookup(out, CASE_PATH))
@@ -626,6 +632,8 @@ fetch(API_URL)
                     parse_date: Date.parse(el.date),
                     entries: el.entries
                 }));
+
+                generate_dates(out);
                 hosps_chart = build_chart(vacc_hosps_ctx, out, 'Vully Vaccinated');
 
                 build_absolute(dataset_vacc_hosps, dataset_hosps, total_hosps_sum_ui, vacc_hosps_sum_ui);
@@ -668,6 +676,9 @@ fetch(API_URL)
                     parse_date: Date.parse(el.date),
                     entries: el.entries
                 }));
+
+                generate_dates(out);
+
                 deaths_chart = build_chart(vacc_deaths_ctx, out, 'Vully Vaccinated');
 
                 build_absolute(dataset_vacc_deaths, dataset_deaths, total_deaths_sum_ui, vacc_deaths_sum_ui);
