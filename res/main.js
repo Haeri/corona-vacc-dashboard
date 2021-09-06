@@ -805,7 +805,7 @@ fetch(API_URL)
                 }));
                 generate_dates(out, api_out);
 
-                cases_chart = build_chart(vacc_cases_ctx, out, 'Vully Vaccinated');
+                cases_chart = build_chart(vacc_cases_ctx, out, 'Fully Vaccinated');
 
                 build_absolute(dataset_vacc_cases, dataset_cases, total_cases_sum_ui, vacc_cases_sum_ui);
             })
@@ -823,7 +823,7 @@ fetch(API_URL)
                 }));
 
                 generate_dates(out, api_out);
-                hosps_chart = build_chart(vacc_hosps_ctx, out, 'Vully Vaccinated');
+                hosps_chart = build_chart(vacc_hosps_ctx, out, 'Fully Vaccinated');
 
                 build_absolute(dataset_vacc_hosps, dataset_hosps, total_hosps_sum_ui, vacc_hosps_sum_ui);
             })
@@ -842,7 +842,7 @@ fetch(API_URL)
 
                 generate_dates(out, api_out);
 
-                deaths_chart = build_chart(vacc_deaths_ctx, out, 'Vully Vaccinated');
+                deaths_chart = build_chart(vacc_deaths_ctx, out, 'Fully Vaccinated');
 
                 build_absolute(dataset_vacc_deaths, dataset_deaths, total_deaths_sum_ui, vacc_deaths_sum_ui);
             })
