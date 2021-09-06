@@ -567,46 +567,6 @@ function calculate_efficacy_average(dataset, week_min, week_max) {
 
 function fetch_date_dependents(api_out) {
 
-    document.getElementById("min-input").addEventListener("input", (e) => {
-        min_input_ui.value = Math.min(min_input_ui.value, max_input_ui.value);
-        let value = (min_input_ui.value / parseInt(min_input_ui.max)) * 100;
-        range_ui.style.left = value + '%';
-        thumb_left_ui.style.left = value + '%';
-        min_value_ui.innerHTML = dates.ch[min_input_ui.value];
-    });
-
-    document.getElementById("max-input").addEventListener("input", (e) => {
-        max_input_ui.value = Math.max(max_input_ui.value, min_input_ui.value);
-        let value = (max_input_ui.value / parseInt(max_input_ui.max)) * 100;
-        range_ui.style.right = (100 - value) + '%';
-        thubb_right_ui.style.left = value + '%';
-        max_value_ui.innerHTML = dates.ch[max_input_ui.value];
-    });
-
-    document.getElementById("min-input").addEventListener("change", (e) => {
-        update_range();
-    });
-    document.getElementById("max-input").addEventListener("change", (e) => {
-        update_range();
-    });
-
-    [...document.getElementsByClassName("collapse-toggle")].forEach(el => {
-        el.addEventListener("click", (e) => {
-            e.preventDefault();
-            let target = document.querySelector(e.target.dataset.target);
-            if (target.classList.contains("open")) {
-                target.classList.remove("open");
-                e.target.innerText = "show";
-            } else {
-                target.classList.add("open");
-                e.target.innerText = "hide";
-            }
-            return false;
-        });
-    });
-
-
-
     fetch(path_lookup(api_out, CASE_PATH))
         .then(res => res.json())
         .then(out => {
@@ -762,6 +722,46 @@ function fetch_date_dependents(api_out) {
             dataset_efficacy_deaths = build_efficacy(death_efficacy_pie_chart, dataset_vacc_deaths_weekly, dataset_deaths_weekly, death_efficacy_ui, 2);
         })
         .catch(err => { console.log(err) });
+
+
+
+    document.getElementById("min-input").addEventListener("input", (e) => {
+        min_input_ui.value = Math.min(min_input_ui.value, max_input_ui.value);
+        let value = (min_input_ui.value / parseInt(min_input_ui.max)) * 100;
+        range_ui.style.left = value + '%';
+        thumb_left_ui.style.left = value + '%';
+        min_value_ui.innerHTML = dates.ch[min_input_ui.value];
+    });
+
+    document.getElementById("max-input").addEventListener("input", (e) => {
+        max_input_ui.value = Math.max(max_input_ui.value, min_input_ui.value);
+        let value = (max_input_ui.value / parseInt(max_input_ui.max)) * 100;
+        range_ui.style.right = (100 - value) + '%';
+        thubb_right_ui.style.left = value + '%';
+        max_value_ui.innerHTML = dates.ch[max_input_ui.value];
+    });
+
+    document.getElementById("min-input").addEventListener("change", (e) => {
+        update_range();
+    });
+    document.getElementById("max-input").addEventListener("change", (e) => {
+        update_range();
+    });
+
+    [...document.getElementsByClassName("collapse-toggle")].forEach(el => {
+        el.addEventListener("click", (e) => {
+            e.preventDefault();
+            let target = document.querySelector(e.target.dataset.target);
+            if (target.classList.contains("open")) {
+                target.classList.remove("open");
+                e.target.innerText = "show";
+            } else {
+                target.classList.add("open");
+                e.target.innerText = "hide";
+            }
+            return false;
+        });
+    });
 }
 
 
