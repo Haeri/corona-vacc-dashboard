@@ -56,6 +56,10 @@ h5{
     opacity: 0;
 }
 
+section{
+    display: none !important;
+}
+
 .req-status {
     width: 9px;
     height: 9px;
@@ -99,6 +103,13 @@ small {
     display: block;
     border: 1px dashed var(--element-gray);
 }
+
+small.dange{
+    color: rgb(220, 63, 52);
+    border-color: rgb(220, 63, 52);
+}
+
+
 
 .totals-wrapper > div {
     display: -webkit-box;
