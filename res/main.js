@@ -213,7 +213,7 @@ function build_chart(ctx, data, label) {
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: data.map(el => convert_to_ch(el.date)),
+            labels: data.map(el => el.date),
             datasets: [{
                 label: label,
                 data: data.map(el => el.entries),
@@ -234,13 +234,13 @@ function build_chart(ctx, data, label) {
     return myChart;
 }
 function build_chart_ag(ctx, data) {
-    let grouped_data = group_by(data, "altersklasse_covid19");
+    let grouped_data = group_by(data, "ag");
     let dataset = [];
 
     Object.entries(grouped_data).forEach(([key, value], index) => {
         if (key == 'Unbekannt') return;
         dataset.push({
-            label: value[0].altersklasse_covid19,
+            label: value[0].ag,
             data: value.map(el => el.entries),
             backgroundColor: COLORS[index]
         });
@@ -249,7 +249,7 @@ function build_chart_ag(ctx, data) {
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: Object.keys(group_by(data, "date")).map(el => parseInt(el)),
+            labels: Object.keys(group_by(data, "week")).map(el => parseInt(el)),
             datasets: dataset
         },
         options: {
@@ -502,11 +502,10 @@ function update_range() {
 function generate_dates(data, api_out) {
     if (dates.length !== 0) return;
 
-    data = data.filter(el => START_DATE_PARSED <= Date.parse(el.date) && el.geoRegion === "CHFL" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated")
     dates = {
-        parsed: data.map(el => Date.parse(el.date)),
-        ch: data.map(el => convert_to_ch(el.date)),
-        weeks: data.map(el => get_iso_week(el.date)),
+        parsed: data.map(el => el.parse_date),
+        ch: data.map(el => el.date),
+        weeks: data.map(el => get_iso_week(el.parse_date)),
     }
     min_input_ui.max = dates.ch.length - 1;
     max_input_ui.max = dates.ch.length - 1;
@@ -536,13 +535,14 @@ function generate_efficacy_dataset(vacc_data, tot_data, week_min, week_max) {
 
     let ret = [];
     vacc_data.forEach((el, i) => {
-        if (vacc_stats[i].date != tot_data[i].date || vacc_stats[i].date != vacc_stats[i].date) console.log("PROBLEM:", i);
+        if (vacc_stats[i].date != tot_data[i].date || vacc_stats[i].date != vacc_data[i].date) console.error("PROBLEM:", i);
         let vacc_persons = vacc_stats[i].sumTotal;
         let unvacc_persons = tot_data[i].pop - vacc_stats[i].sumTotal;
         let vacc_cases = el.entries;
         let unvacc_cases = tot_data[i].entries - el.entries;
         let RR = (vacc_cases / vacc_persons * 100) / (unvacc_cases / unvacc_persons * 100);
-        let VE = Math.max((1 - RR) * 100, 0);
+        let VE = Math.max((1 - RR) * 100, 0);        
+
         ret.push({
             date: el.date,
             vacc_cases,
@@ -552,6 +552,8 @@ function generate_efficacy_dataset(vacc_data, tot_data, week_min, week_max) {
             efficacy: VE
         })
     })
+
+    console.table(ret);
     return ret;
 }
 
@@ -572,7 +574,7 @@ function fetch_date_dependents(api_out) {
         .then(res => res.json())
         .then(out => {
             set_status_value("case_request");
-            dataset_cases = out.filter(el => START_DATE_PARSED <= Date.parse(el.datum) && el.geoRegion === "CHFL" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+            dataset_cases = out.filter(el => START_DATE_PARSED <= Date.parse(el.datum) && el.geoRegion === "CHFL");
             dataset_cases = dataset_cases.map(el => ({
                 date: convert_to_ch(el.datum),
                 parse_date: Date.parse(el.datum),
@@ -590,13 +592,13 @@ function fetch_date_dependents(api_out) {
 
             build_absolute(dataset_vacc_cases, dataset_cases, total_cases_sum_ui, vacc_cases_sum_ui);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
 
     fetch(path_lookup(api_out, HOSP_PATH))
         .then(res => res.json())
         .then(out => {
             set_status_value("hosp_request");
-            dataset_hosps = out.filter(el => START_DATE_PARSED <= Date.parse(el.datum) && el.geoRegion === "CHFL" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+            dataset_hosps = out.filter(el => START_DATE_PARSED <= Date.parse(el.datum) && el.geoRegion === "CHFL");
             dataset_hosps = dataset_hosps.map(el => ({
                 date: convert_to_ch(el.datum),
                 parse_date: Date.parse(el.datum),
@@ -615,12 +617,12 @@ function fetch_date_dependents(api_out) {
 
             build_absolute(dataset_vacc_hosps, dataset_hosps, total_hosps_sum_ui, vacc_hosps_sum_ui);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
     fetch(path_lookup(api_out, DEATH_PATH))
         .then(res => res.json())
         .then(out => {
             set_status_value("death_request");
-            dataset_deaths = out.filter(el => START_DATE_PARSED <= Date.parse(el.datum) && el.geoRegion === "CHFL" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+            dataset_deaths = out.filter(el => START_DATE_PARSED <= Date.parse(el.datum) && el.geoRegion === "CHFL");
             dataset_deaths = dataset_deaths.map(el => ({
                 date: convert_to_ch(el.datum),
                 parse_date: Date.parse(el.datum),
@@ -638,7 +640,7 @@ function fetch_date_dependents(api_out) {
 
             build_absolute(dataset_vacc_deaths, dataset_deaths, total_deaths_sum_ui, vacc_deaths_sum_ui);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
 
 
 
@@ -646,7 +648,7 @@ function fetch_date_dependents(api_out) {
         .then(res => res.json())
         .then(out => {
             set_status_value("case_weekly_request");
-            dataset_cases_weekly = out.filter(el => el.geoRegion === "CHFL" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+            dataset_cases_weekly = out.filter(el => el.datum >= START_WEEK && el.geoRegion === "CHFL");
             dataset_cases_weekly = dataset_cases_weekly.map(el => ({
                 date: el.datum,
                 entries: el.entries,
@@ -655,12 +657,12 @@ function fetch_date_dependents(api_out) {
 
             dataset_efficacy_cases = build_efficacy(case_efficacy_pie_chart, dataset_vacc_cases_weekly, dataset_cases_weekly, case_efficacy_ui, 0);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
     fetch(path_lookup(api_out, HOSP_WEEKLY_PATH))
         .then(res => res.json())
         .then(out => {
             set_status_value("hosp_weekly_request");
-            dataset_hosps_weekly = out.filter(el => el.geoRegion === "CHFL" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+            dataset_hosps_weekly = out.filter(el => el.datum >= START_WEEK && el.geoRegion === "CHFL");
             dataset_hosps_weekly = dataset_hosps_weekly.map(el => ({
                 date: el.datum,
                 entries: el.entries,
@@ -669,12 +671,12 @@ function fetch_date_dependents(api_out) {
 
             dataset_efficacy_hosps = build_efficacy(hosp_efficacy_pie_chart, dataset_vacc_hosps_weekly, dataset_hosps_weekly, hosp_efficacy_ui, 1);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
     fetch(path_lookup(api_out, DEATH_WEEKLY_PATH))
         .then(res => res.json())
         .then(out => {
             set_status_value("death_weekly_request");
-            dataset_deaths_weekly = out.filter(el => el.geoRegion === "CHFL" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+            dataset_deaths_weekly = out.filter(el => el.datum >= START_WEEK && el.geoRegion === "CHFL");
             dataset_deaths_weekly = dataset_deaths_weekly.map(el => ({
                 date: el.datum,
                 entries: el.entries,
@@ -682,13 +684,13 @@ function fetch_date_dependents(api_out) {
             }));
             dataset_efficacy_deaths = build_efficacy(death_efficacy_pie_chart, dataset_vacc_deaths_weekly, dataset_deaths_weekly, death_efficacy_ui, 2);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
 
     fetch(path_lookup(api_out, CASE_VACC_SEX_PATH))
         .then(res => res.json())
         .then(out => {
             set_status_value("case_vacc_sex_request");
-            dataset_vacc_cases_weekly = out.filter(el => el.sex === "all" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+            dataset_vacc_cases_weekly = out.filter(el => el.date >= START_WEEK && el.sex === "all" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
             dataset_vacc_cases_weekly = dataset_vacc_cases_weekly.map(el => ({
                 date: el.date,
                 entries: el.entries
@@ -696,12 +698,12 @@ function fetch_date_dependents(api_out) {
 
             dataset_efficacy_cases = build_efficacy(case_efficacy_pie_chart, dataset_vacc_cases_weekly, dataset_cases_weekly, case_efficacy_ui, 0);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
     fetch(path_lookup(api_out, HOSP_VACC_SEX_PATH))
         .then(res => res.json())
         .then(out => {
             set_status_value("hosp_vacc_sex_request");
-            dataset_vacc_hosps_weekly = out.filter(el => el.sex === "all" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+            dataset_vacc_hosps_weekly = out.filter(el => el.date >= START_WEEK && el.sex === "all" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
             dataset_vacc_hosps_weekly = dataset_vacc_hosps_weekly.map(el => ({
                 date: el.date,
                 entries: el.entries
@@ -709,12 +711,12 @@ function fetch_date_dependents(api_out) {
 
             dataset_efficacy_hosps = build_efficacy(hosp_efficacy_pie_chart, dataset_vacc_hosps_weekly, dataset_hosps_weekly, hosp_efficacy_ui, 1);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
     fetch(path_lookup(api_out, DEATH_VACC_SEX_PATH))
         .then(res => res.json())
         .then(out => {
             set_status_value("death_vacc_sex_request");
-            dataset_vacc_deaths_weekly = out.filter(el => el.sex === "all");
+            dataset_vacc_deaths_weekly = out.filter(el => el.date >= START_WEEK && el.sex === "all" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
             dataset_vacc_deaths_weekly = dataset_vacc_deaths_weekly.map(el => ({
                 date: el.date,
                 entries: el.entries
@@ -722,7 +724,7 @@ function fetch_date_dependents(api_out) {
 
             dataset_efficacy_deaths = build_efficacy(death_efficacy_pie_chart, dataset_vacc_deaths_weekly, dataset_deaths_weekly, death_efficacy_ui, 2);
         })
-        .catch(err => { console.log(err) });
+        .catch(err => { console.error(err) });
 
 
 
@@ -791,63 +793,63 @@ fetch(API_URL)
                 set_status_value("vacc_persons_request");
                 dataset_vacc_persons = out.filter(el => el.geoRegion === "all" && el.indication === "all");
             })
-            .catch(err => { console.log(err) });
+            .catch(err => { console.error(err) });
 
 
         fetch(path_lookup(api_out, CASE_VACC_PATH))
             .then(res => res.json())
             .then(out => {
                 set_status_value("case_vacc_request");
-                dataset_vacc_cases = out.filter(el => START_DATE_PARSED <= Date.parse(el.date) && el.geoRegion === "CHFL");
+                dataset_vacc_cases = out.filter(el => START_DATE_PARSED <= Date.parse(el.date) && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated" && el.geoRegion === "CHFL");
                 dataset_vacc_cases = dataset_vacc_cases.map(el => ({
                     date: convert_to_ch(el.date),
                     parse_date: Date.parse(el.date),
                     entries: el.entries
                 }));
-                generate_dates(out, api_out);
+                generate_dates(dataset_vacc_cases, api_out);
 
-                cases_chart = build_chart(vacc_cases_ctx, out, 'Fully Vaccinated');
+                cases_chart = build_chart(vacc_cases_ctx, dataset_vacc_cases, 'Fully Vaccinated');
 
                 build_absolute(dataset_vacc_cases, dataset_cases, total_cases_sum_ui, vacc_cases_sum_ui);
             })
-            .catch(err => { console.log(err) });
+            .catch(err => { console.error(err) });
 
         fetch(path_lookup(api_out, HOSP_VACC_PATH))
             .then(res => res.json())
             .then(out => {
                 set_status_value("hosp_vacc_request");
-                dataset_vacc_hosps = out.filter(el => START_DATE_PARSED <= Date.parse(el.date) && el.geoRegion === "CHFL");
+                dataset_vacc_hosps = out.filter(el => START_DATE_PARSED <= Date.parse(el.date) && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated" && el.geoRegion === "CHFL");
                 dataset_vacc_hosps = dataset_vacc_hosps.map(el => ({
                     date: convert_to_ch(el.date),
                     parse_date: Date.parse(el.date),
                     entries: el.entries
                 }));
 
-                generate_dates(out, api_out);
-                hosps_chart = build_chart(vacc_hosps_ctx, out, 'Fully Vaccinated');
+                generate_dates(dataset_vacc_hosps, api_out);
+                hosps_chart = build_chart(vacc_hosps_ctx, dataset_vacc_hosps, 'Fully Vaccinated');
 
                 build_absolute(dataset_vacc_hosps, dataset_hosps, total_hosps_sum_ui, vacc_hosps_sum_ui);
             })
-            .catch(err => { console.log(err) });
+            .catch(err => { console.error(err) });
 
         fetch(path_lookup(api_out, DEATH_VACC_PATH))
             .then(res => res.json())
             .then(out => {
                 set_status_value("death_vacc_request");
-                dataset_vacc_deaths = out.filter(el => START_DATE_PARSED <= Date.parse(el.date) && el.geoRegion === "CHFL");
+                dataset_vacc_deaths = out.filter(el => START_DATE_PARSED <= Date.parse(el.date) && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated" && el.geoRegion === "CHFL");
                 dataset_vacc_deaths = dataset_vacc_deaths.map(el => ({
                     date: convert_to_ch(el.date),
                     parse_date: Date.parse(el.date),
                     entries: el.entries
                 }));
 
-                generate_dates(out, api_out);
+                generate_dates(dataset_vacc_deaths, api_out);
 
-                deaths_chart = build_chart(vacc_deaths_ctx, out, 'Fully Vaccinated');
+                deaths_chart = build_chart(vacc_deaths_ctx, dataset_vacc_deaths, 'Fully Vaccinated');
 
                 build_absolute(dataset_vacc_deaths, dataset_deaths, total_deaths_sum_ui, vacc_deaths_sum_ui);
             })
-            .catch(err => { console.log(err) });
+            .catch(err => { console.error(err) });
 
 
 
@@ -855,29 +857,44 @@ fetch(API_URL)
             .then(res => res.json())
             .then(out => {
                 set_status_value("case_ag_request");
-                dataset_vacc_cases_ag = out;
-                cases_ag_chart = build_chart_ag(vacc_cases_ag_ctx, out);
+                dataset_vacc_cases_ag = out.filter(el => el.date >= START_WEEK && el.altersklasse_covid19 !== "all" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+                dataset_vacc_cases_ag = dataset_vacc_cases_ag.map(el => ({
+                    week: el.date,
+                    ag: el.altersklasse_covid19,
+                    entries: el.entries
+                }));
+                cases_ag_chart = build_chart_ag(vacc_cases_ag_ctx, dataset_vacc_cases_ag);
             })
-            .catch(err => { console.log(err) });
+            .catch(err => { console.error(err) });
         fetch(path_lookup(api_out, HOSP_AG_PATH))
             .then(res => res.json())
             .then(out => {
                 set_status_value("hosp_ag_request");
-                dataset_hosps_cases_ag = out;
-                hosps_ag_chart = build_chart_ag(vacc_hosps_ag_ctx, out);
+                dataset_hosps_cases_ag = out.filter(el => el.date >= START_WEEK && el.altersklasse_covid19 !== "all" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+                dataset_hosps_cases_ag = dataset_hosps_cases_ag.map(el => ({
+                    week: el.date,
+                    ag: el.altersklasse_covid19,
+                    entries: el.entries
+                }));
+                hosps_ag_chart = build_chart_ag(vacc_hosps_ag_ctx, dataset_hosps_cases_ag);
             })
-            .catch(err => { console.log(err) });
+            .catch(err => { console.error(err) });
         fetch(path_lookup(api_out, DEATH_AG_PATH))
             .then(res => res.json())
             .then(out => {
                 set_status_value("death_ag_request");
-                dataset_deaths_cases_ag = out;
-                deaths_ag_chart = build_chart_ag(vacc_deaths_ag_ctx, out);
+                dataset_deaths_cases_ag = out.filter(el => el.date >= START_WEEK && el.altersklasse_covid19 !== "all" && el.vaccine === "all" && el.vaccination_status === "fully_vaccinated");
+                dataset_deaths_cases_ag = dataset_deaths_cases_ag.map(el => ({
+                    week: el.date,
+                    ag: el.altersklasse_covid19,
+                    entries: el.entries
+                }));
+                deaths_ag_chart = build_chart_ag(vacc_deaths_ag_ctx, dataset_deaths_cases_ag);
             })
-            .catch(err => { console.log(err) });
+            .catch(err => { console.error(err) });
 
 
 
 
     })
-    .catch(err => { console.log(err) });
+    .catch(err => { console.error(err) });

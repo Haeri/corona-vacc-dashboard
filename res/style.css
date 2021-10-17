@@ -57,7 +57,7 @@ h5{
 }
 
 section{
-    display: none !important;
+    /*display: none !important;*/
 }
 
 .req-status {
@@ -102,6 +102,9 @@ small {
     padding: 5px 10px;
     display: block;
     border: 1px dashed var(--element-gray);
+}
+small svg{
+    color: #777777;
 }
 
 small.dange{
