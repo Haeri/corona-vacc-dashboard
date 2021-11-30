@@ -88,7 +88,12 @@ var dataset_deaths_weekly = [];
 var dataset_efficacy_cases = [];
 var dataset_efficacy_hosps = [];
 var dataset_efficacy_deaths = [];
-var dates = [];
+var dates = {
+    parsed: [],
+    ch: [],
+    weeks: [],
+    unique_weeks: []
+};
 
 var case_efficacy_pie_chart;
 var hosp_efficacy_pie_chart;
@@ -213,10 +218,10 @@ function build_chart(ctx, data, label) {
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: data.map(el => el.date),
+            labels: dates.ch,
             datasets: [{
                 label: label,
-                data: data.map(el => el.entries),
+                data: data.map(el => ({x: el.date, y: el.entries}) ),
                 backgroundColor: data.map(el => value_to_color(el.entries, case_max, COLOR_GREEN.rgb, COLOR_RED.rgb))
             }],
         },
@@ -241,7 +246,7 @@ function build_chart_ag(ctx, data) {
         if (key == 'Unbekannt') return;
         dataset.push({
             label: value[0].ag,
-            data: value.map(el => el.entries),
+            data: value.map(el => ({x: el.week, y: el.entries})),
             backgroundColor: COLORS[index]
         });
     });
@@ -249,7 +254,7 @@ function build_chart_ag(ctx, data) {
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: Object.keys(group_by(data, "week")).map(el => parseInt(el)),
+            labels: dates.unique_weeks,
             datasets: dataset
         },
         options: {
@@ -301,25 +306,28 @@ function build_timeline_chart() {
     efficacy_chart = new Chart(efficacy_timeline_ctx, {
         type: 'line',
         data: {
-            datasets: [{
-                label: "Efficacy Cases",
-                data: [],
-                backgroundColor: COLOR_GREEN.hex,
-                borderColor: COLOR_GREEN.hex,
-            },
-            {
-                label: "Efficacy Hospitalizations",
-                data: [],
-                backgroundColor: COLOR_YELLOW.hex,
-                borderColor: COLOR_YELLOW.hex,
-            },
-            {
-                label: "Efficacy Deaths",
-                data: [],
-                backgroundColor: COLOR_RED.hex,
-                borderColor: COLOR_RED.hex,
-                hidden: true
-            }]
+            labels: dates.unique_weeks,
+            datasets: [
+                {
+                    label: "Efficacy Cases",
+                    data: [],
+                    backgroundColor: COLOR_GREEN.hex,
+                    borderColor: COLOR_GREEN.hex,
+                },
+                {
+                    label: "Efficacy Hospitalizations",
+                    data: [],
+                    backgroundColor: COLOR_YELLOW.hex,
+                    borderColor: COLOR_YELLOW.hex,
+                },
+                {
+                    label: "Efficacy Deaths",
+                    data: [],
+                    backgroundColor: COLOR_RED.hex,
+                    borderColor: COLOR_RED.hex,
+                    hidden: true
+                }
+            ]
         },
         options: {
             scales: {
@@ -331,8 +339,8 @@ function build_timeline_chart() {
     });
 }
 function set_timeline_chart_data(index, data) {
-    efficacy_chart.data.datasets[index].data = data.map(el => el.efficacy);
-    efficacy_chart.data.labels = data.map(el => el.date);
+    efficacy_chart.data.datasets[index].data = data.map(el => ({x: el.date, y: el.efficacy}));
+    //efficacy_chart.data.labels = data.map(el => el.date);
     efficacy_chart.update();
 }
 function update_timeline_chart_range(week_min, week_max) {
@@ -411,13 +419,13 @@ function build_efficacy(chart, vacc_weekly, total_weekly, efficacy_ui, index) {
         update_summary_efficacy(chart, dataset_efficacy, START_DATE_PARSED, dates.parsed[dates.parsed.length - 1], efficacy_ui);
 
         set_timeline_chart_data(index, dataset_efficacy);
-
-        if (dataset_efficacy == dataset_cases_weekly) {
+        
+        if (chart === case_efficacy_pie_chart) {
             setTimeout(() => {
                 var favicon = document.getElementById('favicon');
                 var canvas = document.getElementById('case_pie');
                 favicon.href = canvas.toDataURL('image/png');
-            }, 1000);
+            }, 2000);
         }
 
         return dataset_efficacy;
@@ -425,11 +433,19 @@ function build_efficacy(chart, vacc_weekly, total_weekly, efficacy_ui, index) {
 }
 
 function get_iso_week(date) {
-    var d = new Date(date);
-    var dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return parseInt(d.getFullYear() + String(Math.ceil((((d - yearStart) / 86400000) + 1) / 7)).padStart(2, '0'));
+    var date = new Date(date);
+    date.setHours(0, 0, 0, 0);
+    // Thursday in current week decides the year.
+    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+    // January 4 is always in week 1.
+    var week1 = new Date(date.getFullYear(), 0, 4);
+    // Adjust to Thursday in week 1 and count number of weeks from date to week1.
+    let weeknr = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+
+    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+    let yearnr = date.getFullYear();
+
+    return yearnr*100 + weeknr;
 }
 
 function update_range() {
@@ -498,15 +514,14 @@ function update_range() {
     update_timeline_chart_range(min_week, max_week);
 }
 
-
-function generate_dates(data, api_out) {
-    if (dates.length !== 0) return;
-
-    dates = {
-        parsed: data.map(el => el.parse_date),
-        ch: data.map(el => el.date),
-        weeks: data.map(el => get_iso_week(el.parse_date)),
+function generate_dates() {
+    for(var dt = new Date(START_DATE_PARSED); dt <= new Date(); dt.setDate(dt.getDate()+1)){
+        dates.parsed.push(new Date(dt).getTime());
+        dates.ch.push(convert_to_ch(new Date(dt)));
+        dates.weeks.push(get_iso_week(dt));
     }
+    dates.unique_weeks = dates.weeks.filter((value, index, self) => self.indexOf(value) === index);
+
     min_input_ui.max = dates.ch.length - 1;
     max_input_ui.max = dates.ch.length - 1;
     max_input_ui.value = dates.ch.length - 1;
@@ -523,9 +538,7 @@ function generate_dates(data, api_out) {
             elem.appendChild(week_num);
         }
         range_track_ui.appendChild(elem);
-    });
-
-    fetch_date_dependents(api_out);
+    });    
 }
 
 function generate_efficacy_dataset(vacc_data, tot_data, week_min, week_max) {
@@ -540,7 +553,7 @@ function generate_efficacy_dataset(vacc_data, tot_data, week_min, week_max) {
         let unvacc_persons = tot_data[i].pop - vacc_stats[i].sumTotal;
         let vacc_cases = el.entries;
         let unvacc_cases = tot_data[i].entries - el.entries;
-        let RR = (vacc_cases / vacc_persons * 100) / (unvacc_cases / unvacc_persons * 100);
+        let RR = (vacc_cases / vacc_persons ) / (unvacc_cases / unvacc_persons );
         let VE = Math.max((1 - RR) * 100, 0);        
 
         ret.push({
@@ -553,7 +566,7 @@ function generate_efficacy_dataset(vacc_data, tot_data, week_min, week_max) {
         })
     })
 
-    console.table(ret);
+    
     return ret;
 }
 
@@ -770,6 +783,7 @@ function fetch_date_dependents(api_out) {
 
 
 
+generate_dates();
 build_status_box();
 
 case_efficacy_pie_chart = build_efficacy_chart(case_efficacy_pie_ctx);
@@ -787,6 +801,7 @@ fetch(API_URL)
         let date_source_ui = document.getElementById('date-source');
         date_source_ui.innerText = convert_to_ch(api_out.sourceDate);
 
+
         fetch(path_lookup(api_out, VACC_PERSONS_PATH))
             .then(res => res.json())
             .then(out => {
@@ -795,6 +810,7 @@ fetch(API_URL)
             })
             .catch(err => { console.error(err) });
 
+        fetch_date_dependents(api_out);
 
         fetch(path_lookup(api_out, CASE_VACC_PATH))
             .then(res => res.json())
@@ -804,9 +820,10 @@ fetch(API_URL)
                 dataset_vacc_cases = dataset_vacc_cases.map(el => ({
                     date: convert_to_ch(el.date),
                     parse_date: Date.parse(el.date),
-                    entries: el.entries
+                    entries: el.entries,
+                    status: el.vaccination_status,
+                    tot: el.sumTotal,
                 }));
-                generate_dates(dataset_vacc_cases, api_out);
 
                 cases_chart = build_chart(vacc_cases_ctx, dataset_vacc_cases, 'Fully Vaccinated');
 
@@ -822,10 +839,11 @@ fetch(API_URL)
                 dataset_vacc_hosps = dataset_vacc_hosps.map(el => ({
                     date: convert_to_ch(el.date),
                     parse_date: Date.parse(el.date),
-                    entries: el.entries
+                    entries: el.entries,
+                    status: el.vaccination_status,
+                    tot: el.sumTotal,
                 }));
 
-                generate_dates(dataset_vacc_hosps, api_out);
                 hosps_chart = build_chart(vacc_hosps_ctx, dataset_vacc_hosps, 'Fully Vaccinated');
 
                 build_absolute(dataset_vacc_hosps, dataset_hosps, total_hosps_sum_ui, vacc_hosps_sum_ui);
@@ -840,10 +858,10 @@ fetch(API_URL)
                 dataset_vacc_deaths = dataset_vacc_deaths.map(el => ({
                     date: convert_to_ch(el.date),
                     parse_date: Date.parse(el.date),
-                    entries: el.entries
+                    entries: el.entries,
+                    status: el.vaccination_status,
+                    tot: el.sumTotal,
                 }));
-
-                generate_dates(dataset_vacc_deaths, api_out);
 
                 deaths_chart = build_chart(vacc_deaths_ctx, dataset_vacc_deaths, 'Fully Vaccinated');
 
@@ -892,9 +910,5 @@ fetch(API_URL)
                 deaths_ag_chart = build_chart_ag(vacc_deaths_ag_ctx, dataset_deaths_cases_ag);
             })
             .catch(err => { console.error(err) });
-
-
-
-
     })
     .catch(err => { console.error(err) });
